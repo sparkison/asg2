@@ -1,7 +1,8 @@
 package cs455.harvester.wireformats;
 
-public interface Task {
+public interface Event {
 	
 	public byte[] getBytes();
 	public int getType();
+	
 }

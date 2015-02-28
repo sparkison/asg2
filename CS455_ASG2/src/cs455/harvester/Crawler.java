@@ -8,22 +8,11 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 
-import cs455.harvester.thread.CrawlerThreadPool;
-import cs455.harvester.util.ResultListener;
-
 public class Crawler {
 
 	public static void main(String[] args) throws InterruptedException {
-
-		ResultListener result = new ResultListener();
-		CrawlerThreadPool newPool = new CrawlerThreadPool(10, result);
-		for(int i =0;i<5000;i++){
-			newPool.submit(new MyRunable (i));
-		}
-		newPool.stop();
 		
 		Crawler hv = new Crawler();
-		
 		hv.URLExtractor();
 		
 	}
@@ -51,16 +40,4 @@ public class Crawler {
 		}
 	}
 
-}
-
-class MyRunable implements Callable{
-	int index = -1;
-	public MyRunable(int index){
-		this.index = index;
-	}
-	@Override
-	public Integer call() throws Exception {
-		return index;
-	}
-
-}
+}//END Crawler

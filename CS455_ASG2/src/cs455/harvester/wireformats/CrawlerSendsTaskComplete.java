@@ -1,6 +1,6 @@
 package cs455.harvester.wireformats;
 
-public class CrawlerSendsTaskComplete implements Task {
+public class CrawlerSendsTaskComplete implements Event {
 
 	@Override
 	public byte[] getBytes() {
