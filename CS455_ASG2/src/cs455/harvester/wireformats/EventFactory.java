@@ -20,6 +20,11 @@ public class EventFactory {
 		return instance;
 	}
 
+	public Event getEvent(byte[] data) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
 	/********************************************
 	 ****************** HELPERS *****************
 	 ********************************************/
@@ -58,5 +63,6 @@ public class EventFactory {
 		String[] temp = message.split(delimit);
 		return temp;
 	}// END getMessage
+	
 
 }//************** END EventFactory **************

@@ -32,6 +32,9 @@ public class Crawler {
 		this.rootUrl = rootUrl;
 		this.configPath = configPath;
 		// Do some stuff!!
+		
+		
+		
 	}
 
 

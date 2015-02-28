@@ -1,3 +1,9 @@
+/**
+ * @author Shaun Parkison (shaunpa)
+ * Colorado State University
+ * CS455 - Dist. Systems
+ */
+
 package cs455.harvester.util;
 
 import java.io.IOException;
@@ -40,4 +46,5 @@ public class TestRunner {
 		new Crawler(port, poolSize, rootUrl, configPath);			
 	}
 
-}
+	
+}//END TestRunner
