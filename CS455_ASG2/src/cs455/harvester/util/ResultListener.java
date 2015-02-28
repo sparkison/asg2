@@ -1,4 +1,4 @@
-package cs455.harvester.thread;
+package cs455.harvester.util;
 
 public class ResultListener implements ListenerInterface<Object>{
 

@@ -1,8 +1,10 @@
 package cs455.harvester.thread;
 
 import java.util.concurrent.Callable;
+
+import cs455.harvester.util.ListenerInterface;
 /**
- * Run submitted task of {@link HarvesterThreadPool} After running the task , It calls
+ * Run submitted task of {@link CrawlerThreadPool} After running the task , It calls
  * on {@link ListenerInterface}object with {@link Output}which contains returned
  * result of {@link Callable}task. Waits if the pool is empty.
  *
@@ -10,16 +12,16 @@ import java.util.concurrent.Callable;
  *
  * @param <T>
  */
-public class HarvesterThread<T> extends Thread {
+public class CrawlerThread<T> extends Thread {
 	/**
 	 * MyThreadPool object, from which the task to be run
 	 */
-	private HarvesterThreadPool<T> pool;
+	private CrawlerThreadPool<T> pool;
 	private boolean active = true;
 	public boolean isActive() {
 		return active;
 	}
-	public void setPool(HarvesterThreadPool<T> p) {
+	public void setPool(CrawlerThreadPool<T> p) {
 		pool = p;
 	}
 	/**

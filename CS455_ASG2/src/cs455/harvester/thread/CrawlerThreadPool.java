@@ -2,6 +2,8 @@ package cs455.harvester.thread;
 
 import java.util.LinkedList;
 import java.util.concurrent.Callable;
+
+import cs455.harvester.util.ListenerInterface;
 /**
  * This class is used to execute submitted {@link Callable} tasks. this class
  * creates and manages fixed number of threads User will provide a
@@ -11,7 +13,7 @@ import java.util.concurrent.Callable;
  *
  *
  */
-public class HarvesterThreadPool<T> {
+public class CrawlerThreadPool<T> {
 	private Object waitLock = new Object();
 	public Object getWaitLock() {
 		return waitLock;
@@ -19,7 +21,7 @@ public class HarvesterThreadPool<T> {
 	/**
 	 * list of threads for completing submitted tasks
 	 */
-	private final LinkedList<HarvesterThread<T>> threads;
+	private final LinkedList<CrawlerThread<T>> threads;
 	/**
 	 * submitted task will be kept in this list until they run by one of
 	 * threads in pool
@@ -42,13 +44,13 @@ public class HarvesterThreadPool<T> {
 	 * @param myResultListener
 	 * ResultListener to get back result
 	 */
-	public HarvesterThreadPool(int size, ListenerInterface<T> myResultListener) {
+	public CrawlerThreadPool(int size, ListenerInterface<T> myResultListener) {
 		tasks = new LinkedList<Callable<T>>();
-		threads = new LinkedList<HarvesterThread<T>>();
+		threads = new LinkedList<CrawlerThread<T>>();
 		shutDown = false;
 		resultListener = myResultListener;
 		for (int i = 0; i < size; i++) {
-			HarvesterThread<T> hThread = new HarvesterThread<T>();
+			CrawlerThread<T> hThread = new CrawlerThread<T>();
 			hThread.setPool(this);
 			threads.add(hThread);
 			hThread.start();
@@ -95,13 +97,13 @@ public class HarvesterThreadPool<T> {
 	 *
 	 */
 	public void stop() {
-		for (HarvesterThread<T> hThread : threads) {
+		for (CrawlerThread<T> hThread : threads) {
 			hThread.shutdown();
 		}
 		synchronized (this.waitLock) {
 			waitLock.notifyAll();
 		}
-		for (HarvesterThread<T> hThread : threads) {
+		for (CrawlerThread<T> hThread : threads) {
 			try {
 				hThread.join();
 			} catch (InterruptedException e) {

@@ -1,26 +1,28 @@
-package cs455.harvester.node;
+package cs455.harvester;
 
 import java.util.concurrent.Callable;
+
 import net.htmlparser.jericho.*;
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 
-import cs455.harvester.thread.ResultListener;
-import cs455.harvester.thread.HarvesterThreadPool;
+import cs455.harvester.thread.CrawlerThreadPool;
+import cs455.harvester.util.ResultListener;
 
-public class HarvesterNode {
+public class Crawler {
 
 	public static void main(String[] args) throws InterruptedException {
 
 		ResultListener result = new ResultListener();
-		HarvesterThreadPool newPool = new HarvesterThreadPool(10, result);
+		CrawlerThreadPool newPool = new CrawlerThreadPool(10, result);
 		for(int i =0;i<5000;i++){
 			newPool.submit(new MyRunable (i));
 		}
 		newPool.stop();
 		
-		HarvesterNode hv = new HarvesterNode();
+		Crawler hv = new Crawler();
 		
 		hv.URLExtractor();
 		
