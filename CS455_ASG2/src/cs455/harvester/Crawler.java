@@ -16,7 +16,7 @@ import java.util.List;
 public class Crawler {
 
 	// Instance variables **************
-	
+	// TO-DO
 	
 	public static void main(String[] args) throws InterruptedException {
 
@@ -48,4 +48,4 @@ public class Crawler {
 		}
 	}
 
-}//END Crawler
+}//************** END Crawler **************

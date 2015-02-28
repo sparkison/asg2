@@ -32,11 +32,11 @@ public class CrawlerThreadPool {
 		shutDown = false;
 
 		// Loop to start crawler threads up
-		for (int i = 0; i < size; i++) {
-			CrawlerThread hThread = new CrawlerThread();
-			hThread.setPool(this);
-			threads.add(hThread);
-			hThread.start();
+		for(int i = 0; i<size; i++) {
+			CrawlerThread crawlThread = new CrawlerThread();
+			crawlThread.setPool(this);
+			threads.add(crawlThread);
+			crawlThread.start();
 		}
 	}//END CrawlerThreadPool
 
@@ -46,7 +46,6 @@ public class CrawlerThreadPool {
 	public int getThreadPoolSize() {
 		return threads.size();
 	}
-
 	public Object getWaitLock() {
 		return waitLock;
 	}
@@ -60,8 +59,8 @@ public class CrawlerThreadPool {
 	}
 
 	/**
-	 * Pop item from queue for processing
-	 * @return callable
+	 * Remove item from head of LinkedList for processing
+	 * @return CrawlTask
 	 */
 	public CrawlTask removeFromQueue() {
 		synchronized(tasks){
@@ -70,8 +69,8 @@ public class CrawlerThreadPool {
 	}
 
 	/**
-	 * Add item to queue for processing
-	 * @param callable
+	 * Add item to tail of LinkedList for processing
+	 * @param CrawlTask
 	 */
 	public void submit(CrawlTask task) {
 		if(!shutDown) {
@@ -87,21 +86,22 @@ public class CrawlerThreadPool {
 	}
 
 	/**
-	 * Stop tasks, and shutdown
+	 * Stop all threads, and shutdown
 	 */
 	public void stop() {
-		for (CrawlerThread hThread : threads) {
-			hThread.shutdown();
+		for (CrawlerThread crawlThread : threads) {
+			crawlThread.shutdown();
 		}
 		synchronized (this.waitLock) {
 			waitLock.notifyAll();
 		}
-		for (CrawlerThread hThread : threads) {
+		for (CrawlerThread crawlThread : threads) {
 			try {
-				hThread.join();
+				crawlThread.join();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
 	}
-}
+
+}//************** END CrawlerThreadPool **************

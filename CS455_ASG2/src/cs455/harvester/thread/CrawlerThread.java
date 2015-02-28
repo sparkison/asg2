@@ -15,13 +15,6 @@ public class CrawlerThread extends Thread {
 	private CrawlerThreadPool pool;
 	private boolean active = true;
 
-	public boolean isActive() {
-		return active;
-	}
-	public void setPool(CrawlerThreadPool p) {
-		pool = p;
-	}
-
 	/**
 	 * Main run method for CralwerThread
 	 * Will continue to poll the queue for tasks
@@ -51,9 +44,26 @@ public class CrawlerThread extends Thread {
 					}
 				}
 			}
-		}
-	}
+		}//END while
+		
+	}//END run
 
+	/**
+	 * Tells whether thread is still active or not
+	 * @return boolean
+	 */
+	public boolean isActive() {
+		return active;
+	}
+	
+	/**
+	 * Set the ThreadPool this thread is associated with
+	 * @param pool
+	 */
+	public void setPool(CrawlerThreadPool pool) {
+		this.pool = pool;
+	}
+	
 	/**
 	 * Tell thread to stop executing
 	 */
@@ -64,4 +74,5 @@ public class CrawlerThread extends Thread {
 			active = false;
 		}
 	}
-}
+	
+}//************** END CrawlerThread **************
