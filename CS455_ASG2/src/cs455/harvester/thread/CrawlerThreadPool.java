@@ -10,6 +10,7 @@ import java.util.LinkedList;
 
 import cs455.harvester.task.CrawlTask;
 
+
 public class CrawlerThreadPool {
 
 	// Instance variables **************
@@ -21,11 +22,8 @@ public class CrawlerThreadPool {
 	/**
 	 * Main constructor for thread pool class
 	 * @param size
-	 * @param myResultListener
 	 */
 	public CrawlerThreadPool(int size) {
-
-		// Instance variables to keep track of things
 		// List of tasks to be performed
 		tasks = new LinkedList<CrawlTask>();
 		// List of crawler threads
@@ -40,12 +38,11 @@ public class CrawlerThreadPool {
 			threads.add(hThread);
 			hThread.start();
 		}
-	}
+	}//END CrawlerThreadPool
 
 	/**
 	 * Getters
 	 */
-
 	public int getThreadPoolSize() {
 		return threads.size();
 	}
@@ -55,9 +52,9 @@ public class CrawlerThreadPool {
 	}
 
 	/**
-	 * Status methods
+	 * Get shutdown status
+	 * @return
 	 */
-
 	public boolean isShutDown() {
 		return shutDown;
 	}
@@ -66,8 +63,10 @@ public class CrawlerThreadPool {
 	 * Pop item from queue for processing
 	 * @return callable
 	 */
-	public synchronized CrawlTask removeFromQueue() {
-		return tasks.poll();
+	public CrawlTask removeFromQueue() {
+		synchronized(tasks){
+			return tasks.poll();
+		}
 	}
 
 	/**
@@ -76,14 +75,14 @@ public class CrawlerThreadPool {
 	 */
 	public void submit(CrawlTask task) {
 		if(!shutDown) {
-			synchronized(this){
+			synchronized(tasks){
 				tasks.add(task);
 			}
-			synchronized(this.waitLock){
+			synchronized(waitLock){
 				waitLock.notify();
 			}
 		} else {
-			System.out.println("task is rejected.. Pool shutDown executed");
+			System.out.println("Unable to add task to queue, CrawlerThreadPool has shutdown...");
 		}
 	}
 

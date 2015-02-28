@@ -8,6 +8,7 @@ package cs455.harvester.thread;
 
 import cs455.harvester.task.CrawlTask;
 
+
 public class CrawlerThread extends Thread {
 
 	// Instance variables **************
@@ -31,7 +32,7 @@ public class CrawlerThread extends Thread {
 
 		CrawlTask task;
 
-		while (true) {
+		while(true) {
 			task = pool.removeFromQueue();
 			if (task != null) {
 				try {

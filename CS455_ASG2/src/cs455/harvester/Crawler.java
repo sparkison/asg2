@@ -1,6 +1,10 @@
-package cs455.harvester;
+/**
+ * @author Shaun Parkison (shaunpa)
+ * Colorado State University
+ * CS455 - Dist. Systems
+ */
 
-import java.util.concurrent.Callable;
+package cs455.harvester;
 
 import net.htmlparser.jericho.*;
 
@@ -8,13 +12,17 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 
+
 public class Crawler {
 
+	// Instance variables **************
+	
+	
 	public static void main(String[] args) throws InterruptedException {
-		
+
 		Crawler hv = new Crawler();
 		hv.URLExtractor();
-		
+
 	}
 
 	public void URLExtractor(){
