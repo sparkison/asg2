@@ -18,7 +18,7 @@ public class CrawlerThread extends Thread{
 	public CrawlerThread(CrawlerThreadPool pool){
 		this.pool = pool;
 	}
-	
+
 	/**
 	 * Main run method for CralwerThread
 	 * Will continue to poll the queue for tasks
@@ -26,7 +26,7 @@ public class CrawlerThread extends Thread{
 	 * and return itself to the pool for next task
 	 */
 	public void run() {
-		
+
 		CrawlerTask task;
 
 		while(true) {
@@ -34,6 +34,7 @@ public class CrawlerThread extends Thread{
 			task = pool.removeFromQueue();
 			if(task != null) {
 				try {
+					// System.out.println("Thread " + Thread.currentThread().getName() + " starting task!");
 					task.start();
 					// "Niceness", sleep for 1 second after each task completion
 					Thread.sleep(1000);
@@ -57,7 +58,7 @@ public class CrawlerThread extends Thread{
 				}
 			}
 		}//END while
-		
+
 	}//END run
 
 	/**
@@ -71,5 +72,5 @@ public class CrawlerThread extends Thread{
 			active = false;
 		}
 	}
-	
+
 }//************** END CrawlerThread **************

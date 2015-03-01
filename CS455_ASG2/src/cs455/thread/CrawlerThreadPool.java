@@ -98,9 +98,11 @@ public class CrawlerThreadPool{
 	 * @param String
 	 */
 	public void forward(String forwards){
-		if(crawlerConnections.contains(forwards)){
-			// Forward connection
-			crawler.sendTaskToCrawler(forwards);
+		synchronized(crawlerConnections){
+			if(crawlerConnections.contains(forwards)){
+				// Forward connection
+				crawler.sendTaskToCrawler(forwards);
+			}
 		}
 		//TODO need to mark this as an outgoing link
 	}

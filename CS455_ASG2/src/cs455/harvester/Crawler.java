@@ -63,14 +63,14 @@ public class Crawler implements Node{
 	 * @param configPath
 	 * @throws IOException 
 	 */
-	public Crawler(int port, int poolSize, String rootUrl, String configPath) throws IOException{
-		
+	public Crawler(int port, int poolSize, String crawlUrl, String configPath) throws IOException{
+
 		// Send only the www.rooturl.com portion of URL for easier checking
-		MYURL = rootUrl.split("/")[2];
-		
+		MYURL = crawlUrl.split("/")[2];
+
 		// List of other crawler URLs to send to pool
 		List<String> crawlers = new ArrayList<String>();
-		
+
 		// Path to configuration file
 		Path path = Paths.get(configPath);
 		@SuppressWarnings("resource")
@@ -87,14 +87,21 @@ public class Crawler implements Node{
 				 * Extra check to make sure we don't add ourself to the list
 				 */
 				//System.out.println(connectionRootUrl.split("/")[2]);
-				if(!(connectionRootUrl.equals(rootUrl))){
+				if(!(connectionRootUrl.equals(crawlUrl))){
 					String cleanUrl = connectionRootUrl.split("/")[2];
 					crawlers.add(cleanUrl);
 					CONNECTIONS.put(cleanUrl, connection);
 				}			
+
 			}catch(ArrayIndexOutOfBoundsException e){} // Catch out of bounds error to prevent program termination
 
 		}
+
+		//		for (Map.Entry<String, String[]> entry : CONNECTIONS.entrySet()) {
+		//			String rootUrl = entry.getKey();
+		//			String[] connection = entry.getValue();
+		//			System.out.println("Connections:\n" + "Root URL of crawler: " + rootUrl + ", Connection info: " + connection[0] + ":" + connection[1] + "\n");
+		//		}
 
 		// Open ServerSocket to accept data from other Messaging Nodes
 		this.svSocket = new ServerSocket(port);
@@ -113,10 +120,8 @@ public class Crawler implements Node{
 			System.err.println(e.getMessage());
 		}
 
-		CrawlerTask t1 = new CrawlerTask(RECURSION_DEPTH, rootUrl, rootUrl, myPool);
-		//myPool.submit(t1);
-
-		this.stop();
+		CrawlerTask t1 = new CrawlerTask(RECURSION_DEPTH, crawlUrl, crawlUrl, MYURL, myPool);
+		myPool.submit(t1);
 	}
 
 	/**
@@ -198,7 +203,7 @@ public class Crawler implements Node{
 			}
 		}
 	}
-	
+
 	/**
 	 * Receive events from other Crawlers
 	 * @param Event
@@ -206,22 +211,22 @@ public class Crawler implements Node{
 	@Override
 	public void onEvent(Event event) {
 		switch (event.getType()){
-		
+
 		case Protocol.CRAWLER_SENDS_TASK:
 			receiveTaskFromCrawler(event);
-		
+
 		case Protocol.CRAWLER_SENDS_TASK_COMPLETE:
 			break;
-			
+
 		case Protocol.CRAWLER_SENDS_FINISHED:
 			break;
-			
+
 		default:
 			System.out.println("Unrecognized event type sent.");
-			
+
 		}
 	}
-	
+
 	/**
 	 * Receive task from other crawler
 	 * @param String
@@ -230,10 +235,10 @@ public class Crawler implements Node{
 		CrawlerSendsTask task = (CrawlerSendsTask) e;
 		String urlToCrawl = task.getUrlToCrawl();
 		String originatingUrl = task.getOriginatingCrawlerUrl();
-		
+
 		//TODO need to keep track of originating URL so we can send confirmation when task complete
-		
-		CrawlerTask newTask = new CrawlerTask(RECURSION_DEPTH, urlToCrawl, MYURL, myPool);
+
+		CrawlerTask newTask = new CrawlerTask(RECURSION_DEPTH, urlToCrawl, urlToCrawl, MYURL, myPool);
 		myPool.submit(newTask);
 	}
 

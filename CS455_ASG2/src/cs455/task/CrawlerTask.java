@@ -21,15 +21,17 @@ public class CrawlerTask implements Task {
 
 	// Instance variables **************
 	private final int recursionDepth;
+	private String parentUrl;
 	private String crawlUrl;
 	private String rootUrl;
 	private CrawlerThreadPool crawlerPool;
 
-	public CrawlerTask(int recursionDepth, String crawlUrl, String rootUrl, CrawlerThreadPool crawlerPool){
+	public CrawlerTask(int recursionDepth, String crawlUrl, String parentUrl, String rootUrl, CrawlerThreadPool crawlerPool){
 		// Setting recursion depth to negative so we can increment up to 0
 		// to make things more intuitive
 		this.recursionDepth = recursionDepth;
 		this.crawlUrl = crawlUrl;
+		this.parentUrl = parentUrl;
 		this.rootUrl = rootUrl;
 		this.crawlerPool = crawlerPool;
 	}
@@ -70,7 +72,7 @@ public class CrawlerTask implements Task {
 				
 				if(pageLink.contains(rootUrl) || pageLink.startsWith("/") || pageLink.startsWith("./") || pageLink.startsWith("#")){
 					// URL is a local URL, parse it
-					CrawlerTask task = new CrawlerTask(depth, pageLink, rootUrl, crawlerPool);
+					CrawlerTask task = new CrawlerTask(depth, pageLink, pageUrl, rootUrl, crawlerPool);
 					crawlerPool.submit(task);
 				} else {
 					// Need to forward it on...
@@ -94,11 +96,19 @@ public class CrawlerTask implements Task {
 	public String getRootUrl() {
 		return new String(rootUrl);
 	}
+	
+	/**
+	 * @return the parentUrl
+	 */
+	public String getParentUrl() {
+		return new String(parentUrl);
+	}
 
 	@Override
 	public String toString() {
 		return "CrawlerTask [recursionDepth=" + recursionDepth + ", "
 				+ (crawlUrl != null ? "crawlUrl=" + crawlUrl + ", " : "")
+				+ (parentUrl != null ? "parentUrl=" + parentUrl + ", " : "")
 				+ (rootUrl != null ? "rootUrl=" + rootUrl : "") + "]";
 	}
 
