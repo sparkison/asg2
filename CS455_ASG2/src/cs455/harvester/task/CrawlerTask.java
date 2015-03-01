@@ -71,7 +71,7 @@ public class CrawlerTask implements Task {
 					crawlerPool.submit(task);
 				} else {
 					// Need to forward it on...
-					System.out.println("Url needs to be sent to: ...");
+					System.out.println("Url needs to be sent to crawler with URL: " + pageLink);
 				}
 			}
 
