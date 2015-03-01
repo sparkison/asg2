@@ -22,6 +22,20 @@ public class TestRunner {
 
 		Path path = Paths.get(args[0]);
 
+//		try {
+//			String [] command = {
+//					System.getProperty("java.home") + 
+//					System.getProperty("file.separator") + "bin" + 
+//		            System.getProperty("file.separator") + "java", "-cp", 
+//		            System.getProperty("java.class.path"), "cs455.harvester.Crawler"};
+//			ProcessBuilder p = new ProcessBuilder(command);
+//			p.redirectErrorStream(false);
+//		    Process process = p.start();
+//		    System.out.println("Fin");
+//		} catch (IOException e1) {
+//			e1.printStackTrace();
+//		}
+		
 		try (Scanner scanner =  new Scanner(path)){
 			while (scanner.hasNextLine()){
 				String[] temp = runner.delimitConfig(scanner.nextLine());
@@ -41,7 +55,11 @@ public class TestRunner {
 		int port = Integer.parseInt(config[0].split(":")[1]);
 		String rootUrl = config[1];
 		//System.out.println("Starting Crawler with: portnum: ["+ port +"], poolsize: [" + poolSize + "], rooturl: [" + rootUrl + "], config: [" + configPath + "]");
-		new Crawler(port, poolSize, rootUrl, configPath);			
+		try {
+			new Crawler(port, poolSize, rootUrl, configPath);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}			
 	}
 
 	

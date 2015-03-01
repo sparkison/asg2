@@ -38,6 +38,8 @@ public class CrawlerTask implements Task {
 	public void start() {
 		// Check to make sure we haven't reached max depth
 		if(recursionDepth > 0){
+			// Not yet complete, make sure pool knows we're not done yet
+			crawlerPool.resetComplete();
 			int newDepth = recursionDepth - 1;
 			// Confirm URL crawled
 			crawlerPool.confirmCrawled(this);
@@ -45,6 +47,7 @@ public class CrawlerTask implements Task {
 			URLExtractor(crawlUrl, newDepth);
 		}else{
 			// We've reached the recursion depth, mark task as complete
+			System.out.println("\n\n*********************\nCrawler reported task complete!!\n*********************");
 			crawlerPool.taskComplete();
 		}
 	}
@@ -71,13 +74,11 @@ public class CrawlerTask implements Task {
 					crawlerPool.submit(task);
 				} else {
 					// Need to forward it on...
-					System.out.println("Url needs to be sent to crawler with URL: " + pageLink);
+					crawlerPool.forward(pageLink);
 				}
 			}
 
-		} catch (IOException e) { // in case of malformed url
-			// System.err.println(e.getMessage());
-		}
+		} catch (IOException e) {} // in case of malformed url
 	}
 
 	@Override

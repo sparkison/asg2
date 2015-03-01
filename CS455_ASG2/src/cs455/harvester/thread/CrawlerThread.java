@@ -51,7 +51,7 @@ public class CrawlerThread extends Thread{
 						try {
 							pool.getWaitLock().wait();
 						} catch (InterruptedException e) {
-							System.err.println(e.getMessage());
+							//System.err.println(e.getMessage());
 						}
 					}
 				}

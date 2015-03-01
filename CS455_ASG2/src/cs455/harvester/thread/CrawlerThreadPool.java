@@ -8,7 +8,9 @@ package cs455.harvester.thread;
 
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 
+import cs455.harvester.Crawler;
 import cs455.harvester.task.CrawlerTask;
 
 
@@ -19,6 +21,8 @@ public class CrawlerThreadPool{
 	private volatile boolean complete;
 	private final LinkedList<CrawlerThread> threads;
 	private final LinkedList<CrawlerTask> tasks;
+	private final Crawler crawler;
+	private final List<String> crawlerConnections;
 	private HashSet<CrawlerTask> crawled = new HashSet<CrawlerTask>();
 	private Object waitLock = new Object();
 
@@ -26,7 +30,11 @@ public class CrawlerThreadPool{
 	 * Main constructor for thread pool class
 	 * @param size
 	 */
-	public CrawlerThreadPool(int size) {
+	public CrawlerThreadPool(int size, List<String> crawlerConnections, Crawler crawler) {
+		// Crawler associated with this pool
+		this.crawler = crawler;
+		// List of connections
+		this.crawlerConnections = crawlerConnections;
 		// List of tasks to be performed
 		tasks = new LinkedList<CrawlerTask>();
 		// List of crawler threads
@@ -86,6 +94,18 @@ public class CrawlerThreadPool{
 	}
 	
 	/**
+	 * Forward crawl task to other crawlers
+	 * @param String
+	 */
+	public void forward(String forwards){
+		if(crawlerConnections.contains(forwards)){
+			// Forward connection
+			crawler.sendTaskToCrawler(forwards);
+		}
+		//TODO need to mark this as an outgoing link
+	}
+	
+	/**
 	 * 
 	 * @param task
 	 */
@@ -112,6 +132,12 @@ public class CrawlerThreadPool{
 	 */
 	public void submit(CrawlerTask task) {
 		if(!shutDown) {
+			
+			/*
+			 * If submitted task crawlUrl.equals(rootUrl) originated from this pools node,
+			 * else originated from other node, need to mark as incoming link 
+			 */
+			
 			// Add task to queue, if we haven't already crawled it
 			synchronized(tasks){
 				if(!(crawled.contains(task))){

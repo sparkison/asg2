@@ -20,11 +20,50 @@ public class EventFactory {
 		return instance;
 	}
 
-	public Event getEvent(byte[] data) {
-		// TODO Auto-generated method stub
+	public Event buildEvent(int type, String message) {
+		// Get the message components
+		String[] eventMessage = getMessage(message);
+
+		switch (type) {
+
+		case Protocol.CRAWLER_SENDS_TASK:
+			return new CrawlerSendsTask(type, eventMessage[0], eventMessage[1]);
+
+		case Protocol.CRAWLER_SENDS_TASK_COMPLETE:
+			break;
+
+		case Protocol.CRAWLER_SENDS_FINISHED:
+			break;
+
+		}
+
 		return null;
 	}
-	
+
+	public Event getEvent(byte[] data) {
+		int type = getType(data);
+
+		switch (type) {
+
+		case Protocol.CRAWLER_SENDS_TASK:
+			try {
+				return new CrawlerSendsTask(data);
+			} catch (IOException e) {
+				System.out.println("Error creating CrawlerSendsTask event: ");
+				e.printStackTrace();
+			}
+
+		case Protocol.CRAWLER_SENDS_TASK_COMPLETE:
+			break;
+
+		case Protocol.CRAWLER_SENDS_FINISHED:
+			break;
+
+		}
+
+		return null;
+	}
+
 	/********************************************
 	 ****************** HELPERS *****************
 	 ********************************************/
@@ -62,7 +101,6 @@ public class EventFactory {
 		String delimit = ";";
 		String[] temp = message.split(delimit);
 		return temp;
-	}// END getMessage
-	
+	}// END getMessage	
 
 }//************** END EventFactory **************
