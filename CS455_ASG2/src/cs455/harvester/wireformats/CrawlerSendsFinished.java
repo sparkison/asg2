@@ -1,6 +1,6 @@
 package cs455.harvester.wireformats;
 
-public class CrawlaerSendsFinished implements Event {
+public class CrawlerSendsFinished implements Event {
 
 	@Override
 	public byte[] getBytes() {

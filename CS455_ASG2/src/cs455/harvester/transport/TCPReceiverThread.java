@@ -18,7 +18,6 @@ public class TCPReceiverThread extends Thread{
 	private DataInputStream din;
 	private Node node;
 	private EventFactory ef = EventFactory.getInstance();
-	private int connectionId;
 
 	/**
 	 * Main constructor
@@ -27,8 +26,7 @@ public class TCPReceiverThread extends Thread{
 	 * @param node
 	 * @throws IOException
 	 */
-	public TCPReceiverThread(int id, Socket socket, Node node) throws IOException {
-		this.connectionId = id;
+	public TCPReceiverThread(Socket socket, Node node) throws IOException {
 		this.socket = socket;
 		this.node = node;
 		din = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
@@ -55,8 +53,7 @@ public class TCPReceiverThread extends Thread{
 				 */
 
 				Event e = ef.getEvent(data);
-				//System.out.println("\nSending: " + e);
-				node.onEvent(e, connectionId);	
+				node.onEvent(e);
 
 			} catch (SocketException se) {
 				System.out.println(se.getMessage());

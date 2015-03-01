@@ -4,6 +4,6 @@ import cs455.harvester.wireformats.Event;
 
 public interface Node {
 
-	public void onEvent(Event e, int id);
+	public void onEvent(Event e);
 	
 }

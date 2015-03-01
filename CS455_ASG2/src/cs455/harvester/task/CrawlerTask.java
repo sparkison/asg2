@@ -20,7 +20,7 @@ import net.htmlparser.jericho.LoggerProvider;
 import net.htmlparser.jericho.Source;
 import cs455.harvester.Crawler;
 
-public class CrawlTask implements Task {
+public class CrawlerTask implements Task {
 
 	// Instance variables **************
 	private int recursionDepth;
@@ -29,7 +29,7 @@ public class CrawlTask implements Task {
 	private Crawler crawler;
 	private Map<Integer, ArrayList<String>> recursionLevels = new HashMap<Integer, ArrayList<String>>();
 	
-	public CrawlTask(int recursionDepth, String crawlUrl, String rootUrl, Crawler crawler){
+	public CrawlerTask(int recursionDepth, String crawlUrl, String rootUrl, Crawler crawler){
 		this.recursionDepth = recursionDepth;
 		this.crawlUrl = crawlUrl;
 		this.rootUrl = rootUrl;

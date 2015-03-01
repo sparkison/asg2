@@ -6,7 +6,7 @@
 
 package cs455.harvester.thread;
 
-import cs455.harvester.task.CrawlTask;
+import cs455.harvester.task.CrawlerTask;
 
 
 public class CrawlerThread extends Thread {
@@ -15,6 +15,10 @@ public class CrawlerThread extends Thread {
 	private CrawlerThreadPool pool;
 	private boolean active = true;
 
+	public CrawlerThread(CrawlerThreadPool pool){
+		this.pool = pool;
+	}
+	
 	/**
 	 * Main run method for CralwerThread
 	 * Will continue to poll the queue for tasks
@@ -23,19 +27,24 @@ public class CrawlerThread extends Thread {
 	 */
 	public void run() {
 
-		CrawlTask task;
+		CrawlerTask task;
 
 		while(true) {
+			// Attempt to get an task from the queue
 			task = pool.removeFromQueue();
-			if (task != null) {
+			if(task != null) {
 				try {
 					task.start();
+					// Niceness
+					Thread.sleep(1000);
 				} catch (Exception e) {}
 			} else {
-				if (!isActive())
+				if (!active)
+					// If no longer active, break out of while
 					break;
 				else{
-					synchronized (pool.getWaitLock()) {
+					// Else, try to get lock. This is a blocking call.
+					synchronized(pool.getWaitLock()) {
 						try {
 							pool.getWaitLock().wait();
 						} catch (InterruptedException e) {
@@ -49,25 +58,10 @@ public class CrawlerThread extends Thread {
 	}//END run
 
 	/**
-	 * Tells whether thread is still active or not
-	 * @return boolean
-	 */
-	public boolean isActive() {
-		return active;
-	}
-	
-	/**
-	 * Set the ThreadPool this thread is associated with
-	 * @param pool
-	 */
-	public void setPool(CrawlerThreadPool pool) {
-		this.pool = pool;
-	}
-	
-	/**
 	 * Tell thread to stop executing
 	 */
 	void shutdown() {
+		// Set active to false, then interrupt the thread to ensure it dies
 		try{
 			this.interrupt();
 		}finally{

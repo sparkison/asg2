@@ -8,7 +8,7 @@ package cs455.harvester.thread;
 
 import java.util.LinkedList;
 
-import cs455.harvester.task.CrawlTask;
+import cs455.harvester.task.CrawlerTask;
 
 
 public class CrawlerThreadPool {
@@ -16,7 +16,7 @@ public class CrawlerThreadPool {
 	// Instance variables **************
 	private volatile boolean shutDown;
 	private final LinkedList<CrawlerThread> threads;
-	private final LinkedList<CrawlTask> tasks;
+	private final LinkedList<CrawlerTask> tasks;
 	private Object waitLock = new Object();
 
 	/**
@@ -25,7 +25,7 @@ public class CrawlerThreadPool {
 	 */
 	public CrawlerThreadPool(int size) {
 		// List of tasks to be performed
-		tasks = new LinkedList<CrawlTask>();
+		tasks = new LinkedList<CrawlerTask>();
 		// List of crawler threads
 		threads = new LinkedList<CrawlerThread>();
 		// Volatile boolean for shut down
@@ -33,8 +33,7 @@ public class CrawlerThreadPool {
 
 		// Loop to start crawler threads up
 		for(int i = 0; i<size; i++) {
-			CrawlerThread crawlThread = new CrawlerThread();
-			crawlThread.setPool(this);
+			CrawlerThread crawlThread = new CrawlerThread(this);
 			threads.add(crawlThread);
 			crawlThread.start();
 		}
@@ -55,14 +54,14 @@ public class CrawlerThreadPool {
 	 * @return
 	 */
 	public boolean isShutDown() {
-		return shutDown;
+		return new Boolean(shutDown);
 	}
 
 	/**
 	 * Remove item from head of LinkedList for processing
 	 * @return CrawlTask
 	 */
-	public CrawlTask removeFromQueue() {
+	public CrawlerTask removeFromQueue() {
 		synchronized(tasks){
 			return tasks.poll();
 		}
@@ -70,9 +69,9 @@ public class CrawlerThreadPool {
 
 	/**
 	 * Add item to tail of LinkedList for processing
-	 * @param CrawlTask
+	 * @param CrawlerTask
 	 */
-	public void submit(CrawlTask task) {
+	public void submit(CrawlerTask task) {
 		if(!shutDown) {
 			synchronized(tasks){
 				tasks.add(task);
@@ -89,13 +88,16 @@ public class CrawlerThreadPool {
 	 * Stop all threads, and shutdown
 	 */
 	public void stop() {
-		for (CrawlerThread crawlThread : threads) {
+		// Call shutdown on all threads in pool
+		for(CrawlerThread crawlThread : threads) {
 			crawlThread.shutdown();
 		}
+		// Notify all threads still waiting on lock to finish
 		synchronized (this.waitLock) {
 			waitLock.notifyAll();
 		}
-		for (CrawlerThread crawlThread : threads) {
+		// Finally, wait for all threads to complete tasks
+		for(CrawlerThread crawlThread : threads) {
 			try {
 				crawlThread.join();
 			} catch (InterruptedException e) {

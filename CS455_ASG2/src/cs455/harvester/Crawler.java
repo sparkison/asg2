@@ -6,7 +6,9 @@
 
 package cs455.harvester;
 
-public class Crawler {
+import cs455.harvester.wireformats.Event;
+
+public class Crawler implements Node{
 
 	// Instance variables **************
 	private int port;
@@ -32,9 +34,11 @@ public class Crawler {
 		this.rootUrl = rootUrl;
 		this.configPath = configPath;
 		// Do some stuff!!
-		
-		
-		
+	}
+
+	@Override
+	public void onEvent(Event e) {
+		// TODO Auto-generated method stub
 	}
 
 

@@ -11,6 +11,7 @@ public class TCPConnection{
 	private TCPReceiverThread receiver;
 	private Socket socket;
 	private int connectionId;
+	private Node node;
 	
 	/**
 	 * TCPConncetion constructor
@@ -22,8 +23,8 @@ public class TCPConnection{
 	 */
 	public TCPConnection(int id, Socket socket, Node node){
 		
-		this.connectionId = id;
 		this.socket = socket;
+		this.node = node;
 		
 		try {
 			
@@ -33,7 +34,7 @@ public class TCPConnection{
 			 * can determine where it came from
 			 */
 			this.sender = new TCPSender(socket);
-			this.receiver = new TCPReceiverThread(id, socket, node);
+			this.receiver = new TCPReceiverThread(this.socket, this.node);
 			Thread receive = new Thread(receiver);
 			receive.start();
 			
