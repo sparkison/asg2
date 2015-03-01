@@ -6,6 +6,7 @@
 
 package cs455.harvester.thread;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 
 import cs455.harvester.task.CrawlerTask;
@@ -15,8 +16,10 @@ public class CrawlerThreadPool{
 
 	// Instance variables **************
 	private volatile boolean shutDown;
+	private volatile boolean complete;
 	private final LinkedList<CrawlerThread> threads;
 	private final LinkedList<CrawlerTask> tasks;
+	private HashSet<CrawlerTask> crawled = new HashSet<CrawlerTask>();
 	private Object waitLock = new Object();
 
 	/**
@@ -51,13 +54,48 @@ public class CrawlerThreadPool{
 	}
 
 	/**
-	 * Get shutdown status
-	 * @return
+	 * Return shutdown status
+	 * @return boolean
 	 */
 	public boolean isShutDown() {
 		return new Boolean(shutDown);
 	}
+	
+	/**
+	 * Tells whether this ThreadPool has finished all tasks
+	 * @return
+	 */
+	public boolean isComplete() {
+		return new Boolean(complete);
+	}
 
+	/**
+	 * Used to set the completion status once
+	 * recursive depth has been reached
+	 */
+	public void taskComplete(){
+		complete = true;
+	}
+	
+	/**
+	 * If new task comes in, need to reset recursion
+	 * by marking task as incomplete
+	 */
+	public void resetComplete(){
+		complete = false;
+	}
+	
+	/**
+	 * 
+	 * @param task
+	 */
+	public void confirmCrawled(CrawlerTask task){
+		synchronized(crawled){
+			System.out.println("Task confirmed crawled: " + task);
+			crawled.add(task);
+		}
+	}
+	
 	/**
 	 * Remove item from head of LinkedList for processing
 	 * @return CrawlTask
@@ -74,9 +112,12 @@ public class CrawlerThreadPool{
 	 */
 	public void submit(CrawlerTask task) {
 		if(!shutDown) {
-			// Add task to queue
+			// Add task to queue, if we haven't already crawled it
 			synchronized(tasks){
-				tasks.add(task);
+				if(!(crawled.contains(task))){
+					tasks.add(task);
+					System.out.println("Task added to queue: " + task);
+				}
 			}
 			// If any threads waiting, notify task added to queue
 			synchronized(waitLock){

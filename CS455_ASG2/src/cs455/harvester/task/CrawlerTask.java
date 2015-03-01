@@ -8,62 +8,122 @@ package cs455.harvester.task;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import net.htmlparser.jericho.Config;
 import net.htmlparser.jericho.Element;
 import net.htmlparser.jericho.HTMLElementName;
 import net.htmlparser.jericho.LoggerProvider;
 import net.htmlparser.jericho.Source;
-import cs455.harvester.Crawler;
+import cs455.harvester.thread.CrawlerThreadPool;
 
 public class CrawlerTask implements Task {
 
 	// Instance variables **************
-	private int recursionDepth;
+	private final int recursionDepth;
 	private String crawlUrl;
 	private String rootUrl;
-	private Crawler crawler;
-	private Map<Integer, ArrayList<String>> recursionLevels = new HashMap<Integer, ArrayList<String>>();
-	
-	public CrawlerTask(int recursionDepth, String crawlUrl, String rootUrl, Crawler crawler){
+	private CrawlerThreadPool crawlerPool;
+
+	public CrawlerTask(int recursionDepth, String crawlUrl, String rootUrl, CrawlerThreadPool crawlerPool){
+		// Setting recursion depth to negative so we can increment up to 0
+		// to make things more intuitive
 		this.recursionDepth = recursionDepth;
 		this.crawlUrl = crawlUrl;
 		this.rootUrl = rootUrl;
-		this.crawler = crawler;
+		this.crawlerPool = crawlerPool;
 	}
-	
+
 	@Override
 	public void start() {
-		
-		// TODO Auto-generated method stub
-		
+		// Check to make sure we haven't reached max depth
+		if(recursionDepth > 0){
+			int newDepth = recursionDepth - 1;
+			// Confirm URL crawled
+			crawlerPool.confirmCrawled(this);
+			// Crawl URL
+			URLExtractor(crawlUrl, newDepth);
+		}else{
+			// We've reached the recursion depth, mark task as complete
+			crawlerPool.taskComplete();
+		}
 	}
-	
-	public void URLExtractor(){
-		/**
-		 * This class demonstrates how to use the Jericho HTML parser
-		 * to extract URLs of a given web pages.
-		 */
-		// disable verbose log statements
+
+	public void URLExtractor(String url, int depth){
+
 		Config.LoggerProvider = LoggerProvider.DISABLED;
 		try {
 			// web page that needs to be parsed
-			final String pageUrl = "http://www.cs.colostate.edu/~cs455";
+			final String pageUrl = url;
 			Source source = new Source(new URL(pageUrl));
+
 			// get all 'a' tags
 			List<Element> aTags = source.getAllElements(HTMLElementName.A);
+
 			// get the URL ("href" attribute) in each 'a' tag
 			for (Element aTag : aTags) {
-				// print the url
-				System.out.println(aTag.getAttributeValue("href"));
+				
+				String pageLink = aTag.getAttributeValue("href").toString();
+				
+				if(pageLink.startsWith(rootUrl) || pageLink.startsWith("/") || pageLink.startsWith("./") || pageLink.startsWith("#")){
+					// URL is a local URL, parse it
+					CrawlerTask task = new CrawlerTask(depth, pageLink, rootUrl, crawlerPool);
+					crawlerPool.submit(task);
+				} else {
+					// Need to forward it on...
+					System.out.println("Url needs to be sent to: ...");
+				}
 			}
+
 		} catch (IOException e) { // in case of malformed url
-			System.err.println(e.getMessage());
+			// System.err.println(e.getMessage());
 		}
+	}
+
+	@Override
+	public String toString() {
+		return "CrawlerTask [recursionDepth=" + recursionDepth + ", "
+				+ (crawlUrl != null ? "crawlUrl=" + crawlUrl + ", " : "")
+				+ (rootUrl != null ? "rootUrl=" + rootUrl : "") + "]";
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((crawlUrl == null) ? 0 : crawlUrl.hashCode());
+		result = prime * result + ((rootUrl == null) ? 0 : rootUrl.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (!(obj instanceof CrawlerTask)) {
+			return false;
+		}
+		CrawlerTask other = (CrawlerTask) obj;
+		if (crawlUrl == null) {
+			if (other.crawlUrl != null) {
+				return false;
+			}
+		} else if (!crawlUrl.equals(other.crawlUrl)) {
+			return false;
+		}
+		if (rootUrl == null) {
+			if (other.rootUrl != null) {
+				return false;
+			}
+		} else if (!rootUrl.equals(other.rootUrl)) {
+			return false;
+		}
+		return true;
 	}
 
 }//************** END CrawlTask **************

@@ -9,7 +9,7 @@ package cs455.harvester.thread;
 import cs455.harvester.task.CrawlerTask;
 
 
-public class CrawlerThread extends Thread {
+public class CrawlerThread extends Thread{
 
 	// Instance variables **************
 	private CrawlerThreadPool pool;
@@ -35,20 +35,23 @@ public class CrawlerThread extends Thread {
 			if(task != null) {
 				try {
 					task.start();
-					// Niceness
+					// "Niceness", sleep for 1 second after each task completion
 					Thread.sleep(1000);
-				} catch (Exception e) {}
+				} catch (Exception e) {
+					System.err.println(e.getMessage());
+				}
 			} else {
 				if (!active)
 					// If no longer active, break out of while
 					break;
 				else{
-					// Else, try to get lock. This is a blocking call.
+					// Else, queue was empty, wait until notified items have been added
+					// and try again
 					synchronized(pool.getWaitLock()) {
 						try {
 							pool.getWaitLock().wait();
 						} catch (InterruptedException e) {
-							e.printStackTrace();
+							System.err.println(e.getMessage());
 						}
 					}
 				}
