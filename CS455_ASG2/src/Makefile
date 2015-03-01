@@ -6,4 +6,4 @@ clean:
 
 compile: 
 	@echo -e '[INFO] Compiling the Source..'
-	@javac -d . cs455/**/**/*.java
+	@javac -d . -cp jericho-html-3.3.jar cs455/**/*.java

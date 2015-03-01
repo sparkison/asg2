@@ -4,14 +4,14 @@
  * CS455 - Dist. Systems
  */
 
-package cs455.harvester.thread;
+package cs455.thread;
 
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
 import cs455.harvester.Crawler;
-import cs455.harvester.task.CrawlerTask;
+import cs455.task.CrawlerTask;
 
 
 public class CrawlerThreadPool{

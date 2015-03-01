@@ -1,4 +1,4 @@
-package cs455.harvester.transport;
+package cs455.transport;
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
@@ -7,8 +7,8 @@ import java.net.Socket;
 import java.net.SocketException;
 
 import cs455.harvester.Node;
-import cs455.harvester.wireformats.Event;
-import cs455.harvester.wireformats.EventFactory;
+import cs455.wireformats.Event;
+import cs455.wireformats.EventFactory;
 
 
 public class TCPReceiverThread extends Thread{

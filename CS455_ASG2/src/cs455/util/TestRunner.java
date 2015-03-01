@@ -4,7 +4,7 @@
  * CS455 - Dist. Systems
  */
 
-package cs455.harvester.util;
+package cs455.util;
 
 import java.io.IOException;
 import java.nio.file.Path;

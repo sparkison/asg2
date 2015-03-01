@@ -18,14 +18,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-import cs455.harvester.task.CrawlerTask;
-import cs455.harvester.thread.CrawlerThreadPool;
-import cs455.harvester.transport.TCPReceiverThread;
-import cs455.harvester.transport.TCPSender;
-import cs455.harvester.wireformats.CrawlerSendsTask;
-import cs455.harvester.wireformats.Event;
-import cs455.harvester.wireformats.EventFactory;
-import cs455.harvester.wireformats.Protocol;
+import cs455.task.CrawlerTask;
+import cs455.thread.CrawlerThreadPool;
+import cs455.transport.TCPReceiverThread;
+import cs455.transport.TCPSender;
+import cs455.wireformats.CrawlerSendsTask;
+import cs455.wireformats.Event;
+import cs455.wireformats.EventFactory;
+import cs455.wireformats.Protocol;
 
 
 public class Crawler implements Node{
@@ -190,7 +190,7 @@ public class Crawler implements Node{
 	 */
 	public void sendTaskToCrawler(String crawlUrl){
 		synchronized(myConnections){
-			Event CrawlerSendsTask = ef.buildEvent(cs455.harvester.wireformats.Protocol.CRAWLER_SENDS_TASK, crawlUrl + ";" + MYURL);
+			Event CrawlerSendsTask = ef.buildEvent(cs455.wireformats.Protocol.CRAWLER_SENDS_TASK, crawlUrl + ";" + MYURL);
 			try {
 				myConnections.get(crawlUrl).sendData(CrawlerSendsTask.getBytes());
 			} catch (IOException e) {

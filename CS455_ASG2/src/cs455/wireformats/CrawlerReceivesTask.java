@@ -1,4 +1,4 @@
-package cs455.harvester.wireformats;
+package cs455.wireformats;
 
 public class CrawlerReceivesTask implements Event {
 

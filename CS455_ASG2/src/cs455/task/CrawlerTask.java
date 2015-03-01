@@ -4,7 +4,7 @@
  * CS455 - Dist. Systems
  */
 
-package cs455.harvester.task;
+package cs455.task;
 
 import java.io.IOException;
 import java.net.URL;
@@ -15,7 +15,7 @@ import net.htmlparser.jericho.Element;
 import net.htmlparser.jericho.HTMLElementName;
 import net.htmlparser.jericho.LoggerProvider;
 import net.htmlparser.jericho.Source;
-import cs455.harvester.thread.CrawlerThreadPool;
+import cs455.thread.CrawlerThreadPool;
 
 public class CrawlerTask implements Task {
 

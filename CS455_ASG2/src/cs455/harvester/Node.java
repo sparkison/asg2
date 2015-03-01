@@ -1,6 +1,6 @@
 package cs455.harvester;
 
-import cs455.harvester.wireformats.Event;
+import cs455.wireformats.Event;
 
 public interface Node {
 

@@ -1,4 +1,4 @@
-package cs455.harvester.wireformats;
+package cs455.wireformats;
 
 public interface Protocol {
 	final static int CRAWLER_SENDS_TASK_COMPLETE 		= 1;

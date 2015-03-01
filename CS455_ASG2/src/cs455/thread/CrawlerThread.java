@@ -4,9 +4,9 @@
  * CS455 - Dist. Systems
  */
 
-package cs455.harvester.thread;
+package cs455.thread;
 
-import cs455.harvester.task.CrawlerTask;
+import cs455.task.CrawlerTask;
 
 
 public class CrawlerThread extends Thread{
