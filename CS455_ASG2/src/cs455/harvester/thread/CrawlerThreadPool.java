@@ -11,7 +11,7 @@ import java.util.LinkedList;
 import cs455.harvester.task.CrawlerTask;
 
 
-public class CrawlerThreadPool {
+public class CrawlerThreadPool{
 
 	// Instance variables **************
 	private volatile boolean shutDown;
@@ -37,6 +37,7 @@ public class CrawlerThreadPool {
 			threads.add(crawlThread);
 			crawlThread.start();
 		}
+		
 	}//END CrawlerThreadPool
 
 	/**
@@ -73,9 +74,11 @@ public class CrawlerThreadPool {
 	 */
 	public void submit(CrawlerTask task) {
 		if(!shutDown) {
+			// Add task to queue
 			synchronized(tasks){
 				tasks.add(task);
 			}
+			// If any threads waiting, notify task added to queue
 			synchronized(waitLock){
 				waitLock.notify();
 			}

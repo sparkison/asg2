@@ -40,9 +40,7 @@ public class TestRunner {
 	public void executeCrawler(int poolSize, String[] config, String configPath){
 		int port = Integer.parseInt(config[0].split(":")[1]);
 		String rootUrl = config[1];
-
-		System.out.println("Starting Crawler with: portnum: ["+ port +"], poolsize: [" + poolSize + "], rooturl: [" + rootUrl + "], config: [" + configPath + "]");
-
+		//System.out.println("Starting Crawler with: portnum: ["+ port +"], poolsize: [" + poolSize + "], rooturl: [" + rootUrl + "], config: [" + configPath + "]");
 		new Crawler(port, poolSize, rootUrl, configPath);			
 	}
 

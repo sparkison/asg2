@@ -26,11 +26,11 @@ public class CrawlerThread extends Thread {
 	 * and return itself to the pool for next task
 	 */
 	public void run() {
-
+		
 		CrawlerTask task;
 
 		while(true) {
-			// Attempt to get an task from the queue
+			// Attempt to get a task from the queue
 			task = pool.removeFromQueue();
 			if(task != null) {
 				try {

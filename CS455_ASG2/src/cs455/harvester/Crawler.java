@@ -6,6 +6,7 @@
 
 package cs455.harvester;
 
+import cs455.harvester.thread.CrawlerThreadPool;
 import cs455.harvester.wireformats.Event;
 
 public class Crawler implements Node{
@@ -15,6 +16,7 @@ public class Crawler implements Node{
 	private int poolSize;
 	private String rootUrl;
 	private String configPath;
+	private CrawlerThreadPool myPool;
 	
 	public static void main(String[] args) throws InterruptedException {
 		if(args.length < 3){
@@ -34,6 +36,8 @@ public class Crawler implements Node{
 		this.rootUrl = rootUrl;
 		this.configPath = configPath;
 		// Do some stuff!!
+		myPool = new CrawlerThreadPool(poolSize);
+		System.out.println("New Crawler started!! " + rootUrl);
 	}
 
 	@Override
