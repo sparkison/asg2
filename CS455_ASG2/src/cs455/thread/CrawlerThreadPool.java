@@ -113,7 +113,7 @@ public class CrawlerThreadPool{
 	 */
 	public void confirmCrawled(CrawlerTask task){
 		synchronized(crawled){
-			System.out.println("Task confirmed crawled: " + task);
+			//System.out.println("Task confirmed crawled: " + task);
 			crawled.add(task);
 		}
 	}
@@ -144,7 +144,7 @@ public class CrawlerThreadPool{
 			synchronized(tasks){
 				if(!(crawled.contains(task))){
 					tasks.add(task);
-					System.out.println("Task added to queue: " + task);
+					//System.out.println("Task added to queue: " + task);
 				}
 			}
 			// If any threads waiting, notify task added to queue

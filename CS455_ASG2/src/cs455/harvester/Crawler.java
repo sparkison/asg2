@@ -194,13 +194,11 @@ public class Crawler implements Node{
 	 * @param String
 	 */
 	public void sendTaskToCrawler(String crawlUrl){
-		synchronized(myConnections){
-			Event CrawlerSendsTask = ef.buildEvent(cs455.wireformats.Protocol.CRAWLER_SENDS_TASK, crawlUrl + ";" + MYURL);
-			try {
-				myConnections.get(crawlUrl).sendData(CrawlerSendsTask.getBytes());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+		Event CrawlerSendsTask = ef.buildEvent(cs455.wireformats.Protocol.CRAWLER_SENDS_TASK, crawlUrl + ";" + MYURL);
+		try {
+			myConnections.get(crawlUrl).sendData(CrawlerSendsTask.getBytes());
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
