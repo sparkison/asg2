@@ -68,7 +68,7 @@ public class CrawlerTask implements Task {
 				
 				String pageLink = aTag.getAttributeValue("href").toString();
 				
-				if(pageLink.startsWith(rootUrl) || pageLink.startsWith("/") || pageLink.startsWith("./") || pageLink.startsWith("#")){
+				if(pageLink.contains(rootUrl) || pageLink.startsWith("/") || pageLink.startsWith("./") || pageLink.startsWith("#")){
 					// URL is a local URL, parse it
 					CrawlerTask task = new CrawlerTask(depth, pageLink, rootUrl, crawlerPool);
 					crawlerPool.submit(task);
@@ -79,6 +79,20 @@ public class CrawlerTask implements Task {
 			}
 
 		} catch (IOException e) {} // in case of malformed url
+	}
+
+	/**
+	 * @return the crawlUrl
+	 */
+	public String getCrawlUrl() {
+		return new String(crawlUrl);
+	}
+
+	/**
+	 * @return the rootUrl
+	 */
+	public String getRootUrl() {
+		return new String(rootUrl);
 	}
 
 	@Override
