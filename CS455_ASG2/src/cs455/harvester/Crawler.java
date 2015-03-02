@@ -241,10 +241,11 @@ public class Crawler implements Node{
 		CrawlerSendsTask task = (CrawlerSendsTask) e;
 		String urlToCrawl = task.getUrlToCrawl();
 		String originatingUrl = task.getOriginatingCrawlerUrl();
+		String parentUrl = urlToCrawl;
 
 		//TODO need to keep track of originating URL so we can send confirmation when task complete
 
-		CrawlerTask newTask = new CrawlerTask(RECURSION_DEPTH, urlToCrawl, urlToCrawl, MYURL, myPool);
+		CrawlerTask newTask = new CrawlerTask(RECURSION_DEPTH, urlToCrawl, parentUrl, MYURL, myPool);
 		myPool.submit(newTask);
 	}
 

@@ -72,10 +72,14 @@ public class CrawlerThreadPool{
 			}
 		}
 
+		// A separate thread for Thread creation
 		startDirectoryCreator();
 
 	}//END CrawlerThreadPool
 
+	/**
+	 * Thread for creating directories and files
+	 */
 	private void startDirectoryCreator(){
 		Thread directoryCreator = new Thread(new Runnable() {
 			public void run() {
@@ -86,7 +90,7 @@ public class CrawlerThreadPool{
 					if(entry != null) {
 						try {
 							
-							//TODO create directory and file as needed, add link to in/out file
+							//TODO create directory and files as needed, add link to in/out files
 							
 						} catch (Exception e) {}
 					} else {
@@ -98,9 +102,7 @@ public class CrawlerThreadPool{
 							// and try again
 							try {
 								directoryLock.wait();
-							} catch (InterruptedException e) {
-								//System.err.println(e.getMessage());
-							}
+							} catch (InterruptedException e) {}
 						}
 					}
 				}//END while
