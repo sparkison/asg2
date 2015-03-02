@@ -218,7 +218,7 @@ public class Crawler implements Node{
 
 	/**
 	 * Receive task from other crawler
-	 * @param String
+	 * @param Event
 	 */
 	private void receiveTaskFromCrawler(Event e){
 		CrawlerSendsTask task = (CrawlerSendsTask) e;
