@@ -16,6 +16,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import cs455.harvester.Crawler;
 import cs455.task.CrawlerTask;
+import cs455.util.DirectoryEntry;
 
 
 public class CrawlerThreadPool{
@@ -27,6 +28,7 @@ public class CrawlerThreadPool{
 	private final String DIRECTORY_ROOT = "/tmp/shaunpa/";
 	private final LinkedList<CrawlerThread> threads;
 	private final LinkedList<CrawlerTask> tasks;
+	private final LinkedList<DirectoryEntry> directory;
 	private final Crawler crawler;
 	private final List<String> crawlerConnections;
 	private final ReentrantLock taskLock = new ReentrantLock();
@@ -47,6 +49,8 @@ public class CrawlerThreadPool{
 		tasks = new LinkedList<CrawlerTask>();
 		// List of crawler threads
 		threads = new LinkedList<CrawlerThread>();
+		// create directory list, used for creating the directory structure
+		directory = new LinkedList<DirectoryEntry>();
 		// Volatile boolean for shut down
 		shutDown = false;
 
@@ -136,7 +140,8 @@ public class CrawlerThreadPool{
 				taskLock.unlock();
 			}
 			try {
-				URL url = new URL(task.getCrawlUrl());
+								
+				URL url = new URL(task.getParentUrl());
 				String directoryUrl = url.getPath();
 				String[] temp = directoryUrl.split("/");
 				directoryUrl = "";
@@ -145,9 +150,15 @@ public class CrawlerThreadPool{
 					if(i != temp.length-1)
 						directoryUrl += "-";
 				}
-
-				System.out.println(url.getPath());
+				
+				// Add info to directory list. Use new thread to poll 
+				// for additions and create directory with in/out file and associated links
+				DirectoryEntry directoryEntry = new DirectoryEntry(directoryUrl, task.getCrawlUrl());
+				directory.add(directoryEntry);
+				
+				// Debug
 				System.out.println(directoryUrl);
+				
 			} catch (MalformedURLException e) {}
 		}
 	}
