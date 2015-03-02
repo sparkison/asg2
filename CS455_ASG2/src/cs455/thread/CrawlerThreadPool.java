@@ -166,7 +166,8 @@ public class CrawlerThreadPool{
 	}
 
 	/**
-	 * 
+	 * Called when CrawlTask has completed crawling a URL
+	 * IDEA: use adjacency list? http://opendatastructures.org/ods-java/12_2_AdjacencyLists_Graph_a.html
 	 * @param task
 	 */
 	public void confirmCrawling(CrawlerTask task){

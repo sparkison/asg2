@@ -44,8 +44,6 @@ public class CrawlerTask implements Task {
 			// Not yet complete, make sure pool knows we're not done yet
 			crawlerPool.resetComplete();
 			int newDepth = recursionDepth - 1;
-			// Confirm URL crawled
-			crawlerPool.confirmCrawling(this);
 			// Crawl URL
 			URLExtractor(crawlUrl, newDepth);
 		}else{
@@ -81,6 +79,9 @@ public class CrawlerTask implements Task {
 					crawlerPool.forward(this, pageLink);
 				}
 			}
+			
+			// Confirm URL crawled
+			crawlerPool.confirmCrawling(this);
 
 		} catch (IOException e) {} // in case of malformed url
 	}
