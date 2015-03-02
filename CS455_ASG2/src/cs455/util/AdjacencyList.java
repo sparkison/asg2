@@ -4,22 +4,21 @@
  * CS455 - Dist. Systems
  */
 
-
 package cs455.util;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class AdjacencyList {
 	
 	private final Map<String, List<String>> adjacency;
 
 	public AdjacencyList(){
-		adjacency = new TreeMap<String, List<String>>();
+		adjacency = new HashMap<String, List<String>>();
 	}
 	
 	/**
