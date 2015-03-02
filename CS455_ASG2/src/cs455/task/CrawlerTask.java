@@ -7,6 +7,7 @@
 package cs455.task;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 
@@ -44,7 +45,7 @@ public class CrawlerTask implements Task {
 			crawlerPool.resetComplete();
 			int newDepth = recursionDepth - 1;
 			// Confirm URL crawled
-			crawlerPool.confirmCrawled(this);
+			crawlerPool.confirmCrawling(this);
 			// Crawl URL
 			URLExtractor(crawlUrl, newDepth);
 		}else{
@@ -58,18 +59,19 @@ public class CrawlerTask implements Task {
 
 		Config.LoggerProvider = LoggerProvider.DISABLED;
 		try {
-			// web page that needs to be parsed
-			final String pageUrl = url;
+			// Web page that needs to be parsed,
+			// check for redirect before processing
+			final String pageUrl = resolveRedirects(url);
 			Source source = new Source(new URL(pageUrl));
-
+			
 			// get all 'a' tags
 			List<Element> aTags = source.getAllElements(HTMLElementName.A);
 
 			// get the URL ("href" attribute) in each 'a' tag
 			for (Element aTag : aTags) {
-				
+
 				String pageLink = aTag.getAttributeValue("href").toString();
-				
+
 				if(pageLink.contains(rootUrl) || pageLink.startsWith("/") || pageLink.startsWith("./") || pageLink.startsWith("#")){
 					// URL is a local URL, parse it
 					CrawlerTask task = new CrawlerTask(depth, pageLink, pageUrl, rootUrl, crawlerPool);
@@ -81,6 +83,24 @@ public class CrawlerTask implements Task {
 			}
 
 		} catch (IOException e) {} // in case of malformed url
+	}
+
+	/**
+	 * Handle redirects
+	 * @param url
+	 * @return
+	 * @throws IOException
+	 */
+	public String resolveRedirects(String url) throws IOException {
+		HttpURLConnection con = (HttpURLConnection)(new URL(url).openConnection());
+		con.setInstanceFollowRedirects(false);
+		con.connect();
+		int responseCode = con.getResponseCode();
+		if(responseCode == 301){
+			return con.getHeaderField( "Location" );
+		} else {
+			return url;
+		}
 	}
 
 	/**
@@ -96,7 +116,7 @@ public class CrawlerTask implements Task {
 	public String getRootUrl() {
 		return new String(rootUrl);
 	}
-	
+
 	/**
 	 * @return the parentUrl
 	 */

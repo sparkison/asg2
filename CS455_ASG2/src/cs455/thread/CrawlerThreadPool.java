@@ -89,9 +89,9 @@ public class CrawlerThreadPool{
 					entry = directory.poll();
 					if(entry != null) {
 						try {
-							
+
 							//TODO create directory and files as needed, add link to in/out files
-							
+
 						} catch (Exception e) {}
 					} else {
 						if (!shutDown)
@@ -169,16 +169,9 @@ public class CrawlerThreadPool{
 	 * 
 	 * @param task
 	 */
-	public void confirmCrawled(CrawlerTask task){
+	public void confirmCrawling(CrawlerTask task){
 		if(task.getCrawlUrl() != ""){
-			taskLock.lock();
-			try{
-				crawled.add(task.getCrawlUrl());
-			} finally {
-				taskLock.unlock();
-			}
 			try {
-					
 				synchronized(directory){
 					URL url = new URL(task.getParentUrl());
 					String directoryUrl = url.getPath();
@@ -196,7 +189,7 @@ public class CrawlerThreadPool{
 					directory.add(directoryEntry);
 
 				}
-				
+
 				synchronized(directoryLock){
 					directoryLock.notify();
 				}
@@ -229,6 +222,7 @@ public class CrawlerThreadPool{
 			try{
 				if(!(crawled.contains(task.getCrawlUrl()))){
 					tasks.add(task);
+					crawled.add(task.getCrawlUrl());
 				}
 			} finally {
 				taskLock.unlock();
