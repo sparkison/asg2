@@ -82,7 +82,7 @@ public class CrawlerThreadPool{
 	 * @return boolean
 	 */
 	public boolean isShutDown() {
-		return new Boolean(shutDown);
+		return shutDown ? true : false;
 	}
 
 	/**
