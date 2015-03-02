@@ -1,3 +1,10 @@
+/**
+ * @author Shaun Parkison (shaunpa)
+ * Colorado State University
+ * CS455 - Dist. Systems
+ */
+
+
 package cs455.util;
 
 import java.net.MalformedURLException;
@@ -64,20 +71,20 @@ public class AdjacencyList {
 	/**
 	 * Returns a formatted string for creating directory
 	 * @param String directoryUrl
-	 * @return String directory
+	 * @return String directoryName
 	 * @throws MalformedURLException
 	 */
 	public String getDirectoryName(String directoryUrl) throws MalformedURLException{
 		URL url = new URL(directoryUrl);
-		String directory = url.getPath();
-		String[] temp = directory.split("/");
-		directory = "";
+		String directoryName = url.getPath();
+		String[] temp = directoryName.split("/");
+		directoryName = "";
 		for(int i = 1; i<temp.length; i++){
-			directory += temp[i].replaceAll("[^a-zA-Z0-9.]", "-");
+			directoryName += temp[i].replaceAll("[^a-zA-Z0-9.]", "-");
 			if(i != temp.length-1)
-				directory += "-";
+				directoryName += "-";
 		}
-		return directory;
+		return directoryName;
 	}
 	
-}
+}//END AdjacencyList
