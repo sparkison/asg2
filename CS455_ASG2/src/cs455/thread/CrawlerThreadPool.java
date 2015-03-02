@@ -7,8 +7,6 @@
 package cs455.thread;
 
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -16,7 +14,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import cs455.harvester.Crawler;
 import cs455.task.CrawlerTask;
-import cs455.util.DirectoryEntry;
+import cs455.util.AdjacencyList;
 
 
 public class CrawlerThreadPool{
@@ -28,14 +26,13 @@ public class CrawlerThreadPool{
 	private final String DIRECTORY_ROOT = "/tmp/shaunpa/";
 	private final LinkedList<CrawlerThread> threads;
 	private final LinkedList<CrawlerTask> tasks;
-	private final LinkedList<DirectoryEntry> directory;
+	private final AdjacencyList adjacency;
 	private final Crawler crawler;
 	private final List<String> crawlerConnections;
 	private final ReentrantLock taskLock = new ReentrantLock();
 
 	private List<String> crawled = new ArrayList<String>();
 	private Object waitLock = new Object();
-	private Object directoryLock = new Object();
 
 	/**
 	 * Main constructor for thread pool class
@@ -50,8 +47,8 @@ public class CrawlerThreadPool{
 		tasks = new LinkedList<CrawlerTask>();
 		// List of crawler threads
 		threads = new LinkedList<CrawlerThread>();
-		// create directory list, used for creating the directory structure
-		directory = new LinkedList<DirectoryEntry>();
+		// Create our adjacency list to build out the graph
+		adjacency = new AdjacencyList();
 		// Volatile boolean for shut down
 		shutDown = false;
 
@@ -72,44 +69,7 @@ public class CrawlerThreadPool{
 			}
 		}
 
-		// A separate thread for Thread creation
-		startDirectoryCreator();
-
 	}//END CrawlerThreadPool
-
-	/**
-	 * Thread for creating directories and files
-	 */
-	private void startDirectoryCreator(){
-		Thread directoryCreator = new Thread(new Runnable() {
-			public void run() {
-				DirectoryEntry entry;
-				while(true) {
-					// Attempt to get a task from the queue
-					entry = directory.poll();
-					if(entry != null) {
-						try {
-
-							//TODO create directory and files as needed, add link to in/out files
-
-						} catch (Exception e) {}
-					} else {
-						if (!shutDown)
-							// If no longer active, break out of while
-							break;
-						else{
-							// Else, queue was empty, wait until notified items have been added
-							// and try again
-							try {
-								directoryLock.wait();
-							} catch (InterruptedException e) {}
-						}
-					}
-				}//END while
-			}
-		});  
-		directoryCreator.start();
-	}
 
 	/**
 	 * Getters
@@ -172,30 +132,12 @@ public class CrawlerThreadPool{
 	 */
 	public void confirmCrawling(CrawlerTask task){
 		if(task.getCrawlUrl() != ""){
-			try {
-				synchronized(directory){
-					URL url = new URL(task.getParentUrl());
-					String directoryUrl = url.getPath();
-					String[] temp = directoryUrl.split("/");
-					directoryUrl = "";
-					for(int i = 1; i<temp.length; i++){
-						directoryUrl += temp[i].replaceAll("[^a-zA-Z0-9.]", "-");
-						if(i != temp.length-1)
-							directoryUrl += "-";
-					}
+			synchronized(adjacency){
+				// Add info to directory list. Use new thread to poll 
+				// for additions and create directory with in/out file and associated links
+				adjacency.addEdge(task.getParentUrl(), task.getCrawlUrl());
 
-					// Add info to directory list. Use new thread to poll 
-					// for additions and create directory with in/out file and associated links
-					DirectoryEntry directoryEntry = new DirectoryEntry(directoryUrl, task.getCrawlUrl(), "out");
-					directory.add(directoryEntry);
-
-				}
-
-				synchronized(directoryLock){
-					directoryLock.notify();
-				}
-
-			} catch (MalformedURLException e) {}
+			}
 		}
 	}
 

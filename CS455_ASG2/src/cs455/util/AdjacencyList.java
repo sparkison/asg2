@@ -1,5 +1,7 @@
 package cs455.util;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -45,18 +47,37 @@ public class AdjacencyList {
 	
 	/**
 	 * Returns list of incoming links to given vertex,
-	 * returns null if no incoming edges found
+	 * returns empty List if no incoming edges found
 	 * @param String vertex
 	 * @return List<String> inEdges
 	 */
 	public List<String> inEdges(String vertex){
-		List<String> edgeList = null;
+		List<String> edgeList = new ArrayList<String>();
 		for (String key : adjacency.keySet()) {
 		    int index = adjacency.get(key).indexOf(vertex);
 		    if(index != -1)
 		    	edgeList.add(adjacency.get(key).get(index));
 		}
 		return edgeList;
+	}
+	
+	/**
+	 * Returns a formatted string for creating directory
+	 * @param String directoryUrl
+	 * @return String directory
+	 * @throws MalformedURLException
+	 */
+	public String getDirectoryName(String directoryUrl) throws MalformedURLException{
+		URL url = new URL(directoryUrl);
+		String directory = url.getPath();
+		String[] temp = directory.split("/");
+		directory = "";
+		for(int i = 1; i<temp.length; i++){
+			directory += temp[i].replaceAll("[^a-zA-Z0-9.]", "-");
+			if(i != temp.length-1)
+				directory += "-";
+		}
+		return directory;
 	}
 	
 }
