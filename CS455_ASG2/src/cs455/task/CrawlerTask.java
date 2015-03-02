@@ -76,7 +76,7 @@ public class CrawlerTask implements Task {
 					crawlerPool.submit(task);
 				} else {
 					// Need to forward it on...
-					crawlerPool.forward(pageLink);
+					crawlerPool.forward(this, pageLink);
 				}
 			}
 

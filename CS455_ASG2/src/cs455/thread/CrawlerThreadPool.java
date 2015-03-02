@@ -6,9 +6,11 @@
 
 package cs455.thread;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 import cs455.harvester.Crawler;
 import cs455.task.CrawlerTask;
@@ -19,10 +21,12 @@ public class CrawlerThreadPool{
 	// Instance variables **************
 	private volatile boolean shutDown;
 	private volatile boolean complete;
+	private final String DIRECTORY_ROOT = "/tmp/shaunpa/";
 	private final LinkedList<CrawlerThread> threads;
 	private final LinkedList<CrawlerTask> tasks;
 	private final Crawler crawler;
 	private final List<String> crawlerConnections;
+	private final ReentrantLock taskLock = new ReentrantLock();
 	private HashSet<CrawlerTask> crawled = new HashSet<CrawlerTask>();
 	private Object waitLock = new Object();
 
@@ -48,7 +52,17 @@ public class CrawlerThreadPool{
 			threads.add(crawlThread);
 			crawlThread.start();
 		}
-		
+
+		// Create the root folder for this Crawler
+		File file = new File(DIRECTORY_ROOT + crawler.getRootUrl() + "/nodes");
+		if (!file.exists()) {
+			if (file.mkdirs()) {
+				//System.out.println("Directory is created!");
+			} else {
+				//System.out.println("Failed to create directory!");
+			}
+		}
+
 	}//END CrawlerThreadPool
 
 	/**
@@ -68,7 +82,7 @@ public class CrawlerThreadPool{
 	public boolean isShutDown() {
 		return new Boolean(shutDown);
 	}
-	
+
 	/**
 	 * Tells whether this ThreadPool has finished all tasks
 	 * @return
@@ -84,7 +98,7 @@ public class CrawlerThreadPool{
 	public void taskComplete(){
 		complete = true;
 	}
-	
+
 	/**
 	 * If new task comes in, need to reset recursion
 	 * by marking task as incomplete
@@ -92,39 +106,42 @@ public class CrawlerThreadPool{
 	public void resetComplete(){
 		complete = false;
 	}
-	
+
 	/**
 	 * Forward crawl task to other crawlers
 	 * @param String
 	 */
-	public void forward(String forwards){
+	public void forward(CrawlerTask task, String forwards){
 		synchronized(crawlerConnections){
 			if(crawlerConnections.contains(forwards)){
-				// Forward connection
 				crawler.sendTaskToCrawler(forwards);
 			}
 		}
-		//TODO need to mark this as an outgoing link
 	}
-	
+
 	/**
 	 * 
 	 * @param task
 	 */
 	public void confirmCrawled(CrawlerTask task){
-		synchronized(crawled){
-			//System.out.println("Task confirmed crawled: " + task);
+		taskLock.lock();
+		try{
 			crawled.add(task);
+		} finally {
+			taskLock.unlock();
 		}
 	}
-	
+
 	/**
 	 * Remove item from head of LinkedList for processing
 	 * @return CrawlTask
 	 */
 	public CrawlerTask removeFromQueue() {
-		synchronized(tasks){
+		taskLock.lock();
+		try{
 			return tasks.poll();
+		} finally {
+			taskLock.unlock();
 		}
 	}
 
@@ -134,18 +151,17 @@ public class CrawlerThreadPool{
 	 */
 	public void submit(CrawlerTask task) {
 		if(!shutDown) {
-			
-			/*
-			 * If submitted task crawlUrl.equals(rootUrl) originated from this pools node,
-			 * else originated from other node, need to mark as incoming link 
-			 */
-			
+			taskLock.lock();
 			// Add task to queue, if we haven't already crawled it
-			synchronized(tasks){
+			try{
 				if(!(crawled.contains(task))){
 					tasks.add(task);
 					//System.out.println("Task added to queue: " + task);
+				} else {
+					//System.out.println("Already crawled url: " + task.getCrawlUrl());
 				}
+			} finally {
+				taskLock.unlock();
 			}
 			// If any threads waiting, notify task added to queue
 			synchronized(waitLock){

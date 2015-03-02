@@ -201,6 +201,14 @@ public class Crawler implements Node{
 			e.printStackTrace();
 		}
 	}
+	
+	/**
+	 * Returns the Crawlers rootUrl
+	 * @return String
+	 */
+	public String getRootUrl(){
+		return new String(MYURL);
+	}
 
 	/**
 	 * Receive events from other Crawlers
