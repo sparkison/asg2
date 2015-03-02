@@ -68,9 +68,6 @@ public class Crawler implements Node{
 		// Send only the www.rooturl.com portion of URL for easier checking
 		MYURL = crawlUrl.split("/")[2];
 
-		// List of other crawler URLs to send to pool
-		List<String> crawlers = new ArrayList<String>();
-
 		// Path to configuration file
 		Path path = Paths.get(configPath);
 		@SuppressWarnings("resource")
@@ -89,7 +86,6 @@ public class Crawler implements Node{
 				//System.out.println(connectionRootUrl.split("/")[2]);
 				if(!(connectionRootUrl.equals(crawlUrl))){
 					String cleanUrl = connectionRootUrl.split("/")[2];
-					crawlers.add(cleanUrl);
 					CONNECTIONS.put(cleanUrl, connection);
 				}			
 
@@ -111,7 +107,7 @@ public class Crawler implements Node{
 		System.out.println("Crawler listening for connections on port: " + port);
 
 		// instantiate the ThreadPool
-		myPool = new CrawlerThreadPool(poolSize, crawlers, this);
+		myPool = new CrawlerThreadPool(poolSize, this);
 
 		// Need to sleep for 10 seconds before starting up
 		try {
@@ -188,7 +184,7 @@ public class Crawler implements Node{
 	private String[] delimitConfig(String config){
 		return config.split(",");		
 	}
-	
+
 	/**
 	 * Returns the Crawlers rootUrl
 	 * @return String
@@ -235,20 +231,24 @@ public class Crawler implements Node{
 		CrawlerTask newTask = new CrawlerTask(RECURSION_DEPTH, urlToCrawl, parentUrl, MYURL, myPool);
 		myPool.submit(newTask);
 	}
-	
+
 	/**
 	 * Send URL to connected clients
 	 * @param String
 	 */
 	public void sendTaskToCrawler(String crawlUrl){
 		Event CrawlerSendsTask = ef.buildEvent(cs455.wireformats.Protocol.CRAWLER_SENDS_TASK, crawlUrl + ";" + MYURL);
-		try {
-			
-			//TODO need to make sure URL is in list, and is correctly formatted, use contains() instead? And if true, send to that node
-			
-			myConnections.get(crawlUrl).sendData(CrawlerSendsTask.getBytes());
-		} catch (IOException e) {
-			e.printStackTrace();
+		synchronized(myConnections){
+			try {
+				for (String key : myConnections.keySet()) {
+					if(crawlUrl.contains(key)){
+						myConnections.get(key).sendData(CrawlerSendsTask.getBytes());
+						break;
+					}
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 

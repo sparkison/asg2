@@ -28,7 +28,6 @@ public class CrawlerThreadPool{
 	private final LinkedList<CrawlerTask> tasks;
 	private final AdjacencyList adjacency;
 	private final Crawler crawler;
-	private final List<String> crawlerConnections;
 	private final ReentrantLock taskLock = new ReentrantLock();
 
 	private List<String> crawled = new ArrayList<String>();
@@ -38,11 +37,9 @@ public class CrawlerThreadPool{
 	 * Main constructor for thread pool class
 	 * @param size
 	 */
-	public CrawlerThreadPool(int size, List<String> crawlerConnections, Crawler crawler) {
+	public CrawlerThreadPool(int size, Crawler crawler) {
 		// Crawler associated with this pool
 		this.crawler = crawler;
-		// List of connections
-		this.crawlerConnections = crawlerConnections;
 		// List of tasks to be performed
 		tasks = new LinkedList<CrawlerTask>();
 		// List of crawler threads
@@ -118,11 +115,7 @@ public class CrawlerThreadPool{
 	 * @param String
 	 */
 	public void forward(CrawlerTask task, String forwards){
-		synchronized(crawlerConnections){
-			if(crawlerConnections.contains(forwards)){
-				crawler.sendTaskToCrawler(forwards);
-			}
-		}
+		crawler.sendTaskToCrawler(forwards);
 	}
 
 	/**
