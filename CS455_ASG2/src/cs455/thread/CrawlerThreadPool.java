@@ -7,7 +7,7 @@
 package cs455.thread;
 
 import java.io.File;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
@@ -21,13 +21,15 @@ public class CrawlerThreadPool{
 	// Instance variables **************
 	private volatile boolean shutDown;
 	private volatile boolean complete;
+
 	private final String DIRECTORY_ROOT = "/tmp/shaunpa/";
 	private final LinkedList<CrawlerThread> threads;
 	private final LinkedList<CrawlerTask> tasks;
 	private final Crawler crawler;
 	private final List<String> crawlerConnections;
 	private final ReentrantLock taskLock = new ReentrantLock();
-	private HashSet<CrawlerTask> crawled = new HashSet<CrawlerTask>();
+
+	private List<String> crawled = new ArrayList<String>();
 	private Object waitLock = new Object();
 
 	/**
@@ -126,7 +128,7 @@ public class CrawlerThreadPool{
 	public void confirmCrawled(CrawlerTask task){
 		taskLock.lock();
 		try{
-			crawled.add(task);
+			crawled.add(task.getCrawlUrl());
 		} finally {
 			taskLock.unlock();
 		}
@@ -154,11 +156,8 @@ public class CrawlerThreadPool{
 			taskLock.lock();
 			// Add task to queue, if we haven't already crawled it
 			try{
-				if(!(crawled.contains(task))){
+				if(!(crawled.contains(task.getCrawlUrl()))){
 					tasks.add(task);
-					//System.out.println("Task added to queue: " + task);
-				} else {
-					//System.out.println("Already crawled url: " + task.getCrawlUrl());
 				}
 			} finally {
 				taskLock.unlock();
