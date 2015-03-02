@@ -188,19 +188,6 @@ public class Crawler implements Node{
 	private String[] delimitConfig(String config){
 		return config.split(",");		
 	}
-
-	/**
-	 * Send URL to connected clients
-	 * @param String
-	 */
-	public void sendTaskToCrawler(String crawlUrl){
-		Event CrawlerSendsTask = ef.buildEvent(cs455.wireformats.Protocol.CRAWLER_SENDS_TASK, crawlUrl + ";" + MYURL);
-		try {
-			myConnections.get(crawlUrl).sendData(CrawlerSendsTask.getBytes());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
 	
 	/**
 	 * Returns the Crawlers rootUrl
@@ -247,6 +234,22 @@ public class Crawler implements Node{
 
 		CrawlerTask newTask = new CrawlerTask(RECURSION_DEPTH, urlToCrawl, parentUrl, MYURL, myPool);
 		myPool.submit(newTask);
+	}
+	
+	/**
+	 * Send URL to connected clients
+	 * @param String
+	 */
+	public void sendTaskToCrawler(String crawlUrl){
+		Event CrawlerSendsTask = ef.buildEvent(cs455.wireformats.Protocol.CRAWLER_SENDS_TASK, crawlUrl + ";" + MYURL);
+		try {
+			
+			//TODO need to make sure URL is in list, and is correctly formatted, use contains() instead? And if true, send to that node
+			
+			myConnections.get(crawlUrl).sendData(CrawlerSendsTask.getBytes());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**

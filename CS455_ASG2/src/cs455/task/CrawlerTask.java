@@ -79,9 +79,6 @@ public class CrawlerTask implements Task {
 					crawlerPool.forward(this, pageLink);
 				}
 			}
-			
-			// Confirm URL crawled
-			crawlerPool.confirmCrawling(this);
 
 		} catch (IOException e) {} // in case of malformed url
 	}

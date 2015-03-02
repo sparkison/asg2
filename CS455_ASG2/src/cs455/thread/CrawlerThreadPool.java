@@ -126,22 +126,6 @@ public class CrawlerThreadPool{
 	}
 
 	/**
-	 * Called when CrawlTask has completed crawling a URL
-	 * IDEA: use adjacency list? http://opendatastructures.org/ods-java/12_2_AdjacencyLists_Graph_a.html
-	 * @param task
-	 */
-	public void confirmCrawling(CrawlerTask task){
-		if(task.getCrawlUrl() != ""){
-			synchronized(adjacency){
-				// Add info to directory list. Use new thread to poll 
-				// for additions and create directory with in/out file and associated links
-				adjacency.addEdge(task.getParentUrl(), task.getCrawlUrl());
-
-			}
-		}
-	}
-
-	/**
 	 * Remove item from head of LinkedList for processing
 	 * @return CrawlTask
 	 */
@@ -166,6 +150,7 @@ public class CrawlerThreadPool{
 				if(!(crawled.contains(task.getCrawlUrl()))){
 					tasks.add(task);
 					crawled.add(task.getCrawlUrl());
+					adjacency.addEdge(task.getParentUrl(), task.getCrawlUrl());
 				}
 			} finally {
 				taskLock.unlock();
