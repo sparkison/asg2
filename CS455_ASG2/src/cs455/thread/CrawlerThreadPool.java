@@ -7,6 +7,8 @@
 package cs455.thread;
 
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -126,11 +128,27 @@ public class CrawlerThreadPool{
 	 * @param task
 	 */
 	public void confirmCrawled(CrawlerTask task){
-		taskLock.lock();
-		try{
-			crawled.add(task.getCrawlUrl());
-		} finally {
-			taskLock.unlock();
+		if(task.getCrawlUrl() != ""){
+			taskLock.lock();
+			try{
+				crawled.add(task.getCrawlUrl());
+			} finally {
+				taskLock.unlock();
+			}
+			try {
+				URL url = new URL(task.getCrawlUrl());
+				String directoryUrl = url.getPath();
+				String[] temp = directoryUrl.split("/");
+				directoryUrl = "";
+				for(int i = 1; i<temp.length; i++){
+					directoryUrl += temp[i].replaceAll("[^a-zA-Z0-9.]", "-");
+					if(i != temp.length-1)
+						directoryUrl += "-";
+				}
+
+				System.out.println(url.getPath());
+				System.out.println(directoryUrl);
+			} catch (MalformedURLException e) {}
 		}
 	}
 

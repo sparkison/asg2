@@ -39,7 +39,7 @@ public class CrawlerThread extends Thread{
 					// "Niceness", sleep for 1 second after each task completion
 					Thread.sleep(1000);
 				} catch (Exception e) {
-					System.err.println(e.getMessage());
+					//System.err.println(e.getMessage());
 				}
 			} else {
 				if (!active)
