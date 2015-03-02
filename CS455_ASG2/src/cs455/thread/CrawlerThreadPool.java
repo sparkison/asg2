@@ -35,6 +35,7 @@ public class CrawlerThreadPool{
 
 	private List<String> crawled = new ArrayList<String>();
 	private Object waitLock = new Object();
+	private Object directoryLock = new Object();
 
 	/**
 	 * Main constructor for thread pool class
@@ -71,7 +72,42 @@ public class CrawlerThreadPool{
 			}
 		}
 
+		startDirectoryCreator();
+
 	}//END CrawlerThreadPool
+
+	private void startDirectoryCreator(){
+		Thread directoryCreator = new Thread(new Runnable() {
+			public void run() {
+				DirectoryEntry entry;
+				while(true) {
+					// Attempt to get a task from the queue
+					entry = directory.poll();
+					if(entry != null) {
+						try {
+							
+							//TODO create directory and file as needed, add link to in/out file
+							
+						} catch (Exception e) {}
+					} else {
+						if (!shutDown)
+							// If no longer active, break out of while
+							break;
+						else{
+							// Else, queue was empty, wait until notified items have been added
+							// and try again
+							try {
+								directoryLock.wait();
+							} catch (InterruptedException e) {
+								//System.err.println(e.getMessage());
+							}
+						}
+					}
+				}//END while
+			}
+		});  
+		directoryCreator.start();
+	}
 
 	/**
 	 * Getters
@@ -140,25 +176,29 @@ public class CrawlerThreadPool{
 				taskLock.unlock();
 			}
 			try {
-								
-				URL url = new URL(task.getParentUrl());
-				String directoryUrl = url.getPath();
-				String[] temp = directoryUrl.split("/");
-				directoryUrl = "";
-				for(int i = 1; i<temp.length; i++){
-					directoryUrl += temp[i].replaceAll("[^a-zA-Z0-9.]", "-");
-					if(i != temp.length-1)
-						directoryUrl += "-";
+					
+				synchronized(directory){
+					URL url = new URL(task.getParentUrl());
+					String directoryUrl = url.getPath();
+					String[] temp = directoryUrl.split("/");
+					directoryUrl = "";
+					for(int i = 1; i<temp.length; i++){
+						directoryUrl += temp[i].replaceAll("[^a-zA-Z0-9.]", "-");
+						if(i != temp.length-1)
+							directoryUrl += "-";
+					}
+
+					// Add info to directory list. Use new thread to poll 
+					// for additions and create directory with in/out file and associated links
+					DirectoryEntry directoryEntry = new DirectoryEntry(directoryUrl, task.getCrawlUrl(), "out");
+					directory.add(directoryEntry);
+
 				}
 				
-				// Add info to directory list. Use new thread to poll 
-				// for additions and create directory with in/out file and associated links
-				DirectoryEntry directoryEntry = new DirectoryEntry(directoryUrl, task.getCrawlUrl());
-				directory.add(directoryEntry);
-				
-				// Debug
-				System.out.println(directoryUrl);
-				
+				synchronized(directoryLock){
+					directoryLock.notify();
+				}
+
 			} catch (MalformedURLException e) {}
 		}
 	}
