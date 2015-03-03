@@ -22,7 +22,7 @@ public class CrawlerThreadPool{
 	private volatile boolean shutDown;
 	private volatile boolean complete;
 
-	private final String DIRECTORY_ROOT = "/tmp/shaunpa/";
+	private final String DIRECTORY_ROOT = "/tmp/cs455-shaunpa/";
 	private final LinkedList<CrawlerThread> threads;
 	private final LinkedList<CrawlerTask> tasks;
 	private final AdjacencyList adjacency;
@@ -31,6 +31,7 @@ public class CrawlerThreadPool{
 
 	private List<String> crawled = new ArrayList<String>();
 	private Object waitLock = new Object();
+	private boolean debug = true;
 
 	/**
 	 * Main constructor for thread pool class
@@ -44,7 +45,7 @@ public class CrawlerThreadPool{
 		// List of crawler threads
 		threads = new LinkedList<CrawlerThread>();
 		// Create our adjacency list to build out the graph
-		adjacency = new AdjacencyList();
+		adjacency = new AdjacencyList(crawler.getRootUrl());
 		// Volatile boolean for shut down
 		shutDown = false;
 
@@ -136,6 +137,8 @@ public class CrawlerThreadPool{
 			// Add task to queue, if we haven't already crawled it
 			synchronized(taskLock){
 				if(!(crawled.contains(task.getCrawlUrl()))){
+					if(debug)
+						System.out.println("Task added: " + task);
 					tasks.add(task);
 					crawled.add(task.getCrawlUrl());
 					adjacency.addEdge(task.getParentUrl(), task.getCrawlUrl());

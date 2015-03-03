@@ -36,6 +36,7 @@ public class Crawler implements Node{
 	private Map<String, TCPSender> myConnections = new HashMap<String, TCPSender>();
 	private CrawlerThreadPool myPool;
 	private EventFactory ef = EventFactory.getInstance();
+	private boolean debug = true;
 
 	public static void main(String[] args) throws InterruptedException {
 		if(args.length < 3){
@@ -229,6 +230,9 @@ public class Crawler implements Node{
 
 		//TODO need to keep track of originating URL so we can send confirmation when task complete
 
+		if(debug)
+			System.out.println("Received task from Crawler: " + parentUrl);
+		
 		CrawlerTask newTask = new CrawlerTask(RECURSION_DEPTH, urlToCrawl, parentUrl, MYURL, myPool);
 		myPool.submit(newTask);
 	}
@@ -238,11 +242,15 @@ public class Crawler implements Node{
 	 * @param String
 	 */
 	public void sendTaskToCrawler(String crawlUrl){
+		if(debug)
+			System.out.println("Attempting to send task to Crawler...");
 		Event CrawlerSendsTask = ef.buildEvent(cs455.wireformats.Protocol.CRAWLER_SENDS_TASK, crawlUrl + ";" + MYURL);
 		synchronized(myConnections){
 			try {
 				for (String key : myConnections.keySet()) {
 					if(crawlUrl.contains(key)){
+						if(debug)
+							System.out.println("Crawler found, sending task to Crawler" + key);
 						myConnections.get(key).sendData(CrawlerSendsTask.getBytes());
 						break;
 					}

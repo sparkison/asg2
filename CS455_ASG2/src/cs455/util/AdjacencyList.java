@@ -15,10 +15,12 @@ import java.util.Map;
 
 public class AdjacencyList {
 	
-	private final Map<String, List<String>> adjacency;
-
-	public AdjacencyList(){
-		adjacency = new HashMap<String, List<String>>();
+	private final Map<String, List<String>> ADJACENCY;
+	private final String ROOT_URL;
+	
+	public AdjacencyList(String rootUrl){
+		ADJACENCY = new HashMap<String, List<String>>();
+		ROOT_URL = rootUrl;
 	}
 	
 	/**
@@ -28,12 +30,12 @@ public class AdjacencyList {
 	 * @param String edge
 	 */
 	public void addEdge(String vertex, String edge){
-		if(!(adjacency.containsKey(vertex))){
+		if(!(ADJACENCY.containsKey(vertex))){
 			List<String> edgeList = new ArrayList<String>();
 			edgeList.add(edge);
-			adjacency.put(vertex, edgeList);
+			ADJACENCY.put(vertex, edgeList);
 		}else{
-			adjacency.get(vertex).add(edge);
+			ADJACENCY.get(vertex).add(edge);
 		}
 	}
 	
@@ -45,8 +47,8 @@ public class AdjacencyList {
 	 */
 	public List<String> outEdges(String vertex){
 		List<String> edgeList = null;
-		if(adjacency.containsKey(vertex)){
-			edgeList = new ArrayList<String>(adjacency.get(vertex));
+		if(ADJACENCY.containsKey(vertex)){
+			edgeList = new ArrayList<String>(ADJACENCY.get(vertex));
 		}
 		return edgeList;
 	}
@@ -59,10 +61,10 @@ public class AdjacencyList {
 	 */
 	public List<String> inEdges(String vertex){
 		List<String> edgeList = new ArrayList<String>();
-		for (String key : adjacency.keySet()) {
-		    int index = adjacency.get(key).indexOf(vertex);
+		for (String key : ADJACENCY.keySet()) {
+		    int index = ADJACENCY.get(key).indexOf(vertex);
 		    if(index != -1)
-		    	edgeList.add(adjacency.get(key).get(index));
+		    	edgeList.add(ADJACENCY.get(key).get(index));
 		}
 		return edgeList;
 	}

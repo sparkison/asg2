@@ -8,6 +8,9 @@ package cs455.task;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 
@@ -61,26 +64,47 @@ public class CrawlerTask implements Task {
 			// check for redirect before processing
 			final String pageUrl = resolveRedirects(url);
 			Source source = new Source(new URL(pageUrl));
-			
+
 			// get all 'a' tags
 			List<Element> aTags = source.getAllElements(HTMLElementName.A);
 
 			// get the URL ("href" attribute) in each 'a' tag
 			for (Element aTag : aTags) {
-
-				String pageLink = aTag.getAttributeValue("href").toString();
-
-				if(pageLink.contains(rootUrl) || pageLink.startsWith("/") || pageLink.startsWith("./") || pageLink.startsWith("#")){
-					// URL is a local URL, parse it
-					CrawlerTask task = new CrawlerTask(depth, pageLink, pageUrl, rootUrl, crawlerPool);
-					crawlerPool.submit(task);
-				} else {
-					// Need to forward it on...
-					crawlerPool.forward(this, pageLink);
-				}
+				if(aTag != null){
+					String pageLink = aTag.getAttributeValue("href").toString();
+					if(pageLink.contains(rootUrl)) {
+						// URL is a local URL, parse it
+						CrawlerTask task = new CrawlerTask(depth, pageLink, pageUrl, rootUrl, crawlerPool);
+						crawlerPool.submit(task);
+					} else if(pageLink.charAt(0) == '#' || pageLink.charAt(0) == '/' || pageLink.charAt(0) == '.'){
+						// URL is a relative URL, parse it
+						CrawlerTask task = new CrawlerTask(depth, relativeToAbs(pageUrl, pageLink), pageUrl, rootUrl, crawlerPool);
+						crawlerPool.submit(task);
+					} else {
+						// Need to forward it on...
+						crawlerPool.forward(this, pageLink);
+					}
+				}				
 			}
 
 		} catch (IOException e) {} // in case of malformed url
+	}
+
+	/**
+	 * Returns an absolute URL based on root and realtive URL passed
+	 * @param String root
+	 * @param String relative
+	 * @return String absolute
+	 */
+	private String relativeToAbs(String root, String relative){
+		String absolute = "";
+		try {
+			if(!new URI(relative).isAbsolute()){
+				URI resolvedUrl = new URI(root).resolve(relative);
+				absolute = resolvedUrl.toString();
+			}
+		} catch (URISyntaxException e1) {}
+		return absolute;
 	}
 
 	/**
