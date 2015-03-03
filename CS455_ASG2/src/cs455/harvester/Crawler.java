@@ -250,7 +250,7 @@ public class Crawler implements Node{
 	 * Send incomplete status to all Crawlers
 	 */
 	private void crawlerSendsIncomplete(){
-		CrawlerSendsIncomplete crawlerSendsIncomplete = new CrawlerSendsIncomplete(Protocol.CRAWLER_SENDS_INCOMPLETE, MYURL);
+		Event crawlerSendsIncomplete = ef.buildEvent(Protocol.CRAWLER_SENDS_INCOMPLETE, MYURL);
 		sendToAll(crawlerSendsIncomplete.getBytes());
 	}
 
@@ -271,7 +271,7 @@ public class Crawler implements Node{
 	 */
 	public void crawlerSendsFinished(){
 		if(completionCheck()){
-			CrawlerSendsFinished crawlerSendsFinished = new CrawlerSendsFinished(Protocol.CRAWLER_SENDS_FINISHED, MYURL);
+			Event crawlerSendsFinished = ef.buildEvent(Protocol.CRAWLER_SENDS_FINISHED, MYURL);
 			sendToAll(crawlerSendsFinished.getBytes());
 		}
 	}
@@ -282,7 +282,7 @@ public class Crawler implements Node{
 	 */
 	private void crawlerReceivesTaskComplete(Event e){
 		synchronized(connections){
-			CrawlerSendsTaskComplete taskComplete = (CrawlerSendsTaskComplete) e;
+			CrawlerSendsTaskComplete taskComplete = (CrawlerSendsTaskComplete)e;
 			forwardedTasks.put(taskComplete.getOriginatingUrl(), true);
 			crawlerSendsFinished();
 		}
@@ -293,7 +293,7 @@ public class Crawler implements Node{
 	 * @param String destUrl
 	 */
 	public void crawlerSendsTaskComplete(String destUrl){
-		Event crawlerSendsTaskComplete = ef.buildEvent(Protocol.CRAWLER_SENDS_TASK, destUrl);
+		Event crawlerSendsTaskComplete = ef.buildEvent(Protocol.CRAWLER_SENDS_TASK_COMPLETE, MYURL);
 		synchronized(connections){
 			if (myConnections.containsKey(destUrl)) {
 				try {
@@ -312,19 +312,23 @@ public class Crawler implements Node{
 	 * @param Event e
 	 */
 	private void receiveTaskFromCrawler(Event e){
-		// If receiving a new task, we're not finished, report it
-		crawlerSendsIncomplete();
-		// Create the new task and start it up
-		CrawlerSendsTask task = (CrawlerSendsTask)e;
-		String urlToCrawl = task.getUrlToCrawl();
-		String originatingUrl = task.getOriginatingCrawlerUrl();
-		String parentUrl = urlToCrawl;
+		synchronized(connections){
+			// If receiving a new task, we're not finished, report it
+			crawlerSendsIncomplete();
+			// Create the new task and start it up
+			CrawlerSendsTask task = (CrawlerSendsTask)e;
+			String urlToCrawl = task.getUrlToCrawl();
+			String originatingUrl = task.getOriginatingCrawlerUrl();
+			String parentUrl = urlToCrawl;
 
-		if(debug)
-			System.out.println("\n\n*************************\n Received task from crawler "+ originatingUrl+" \n*************************\n\n");
+			if(debug)
+				System.out.println("\n\n**************************************************\n "
+						+ "Received task from crawler ["+ originatingUrl+"] "
+								+ "\n**************************************************\n\n");
 
-		CrawlerTask newTask = new CrawlerTask(RECURSION_DEPTH, urlToCrawl, parentUrl, MYURL, myPool, originatingUrl);
-		myPool.submit(newTask);
+			CrawlerTask newTask = new CrawlerTask(RECURSION_DEPTH, urlToCrawl, parentUrl, MYURL, myPool, originatingUrl);
+			myPool.submit(newTask);
+		}
 	}
 
 	/**

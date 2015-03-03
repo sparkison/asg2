@@ -31,7 +31,7 @@ public class CrawlerThreadPool{
 	private final Object WAIT_LOCK = new Object();
 
 	private List<String> crawled = new ArrayList<String>();
-	private boolean debug = true;
+	private boolean debug = false;
 
 	/**
 	 * Main constructor for thread pool class
