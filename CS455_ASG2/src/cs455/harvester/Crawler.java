@@ -30,11 +30,11 @@ public class Crawler implements Node{
 
 	// Instance variables **************
 	private final int RECURSION_DEPTH = 5;
-	private final Map<String, String[]> CONNECTIONS = new HashMap<String, String[]>();
 	private final ServerSocket SERVER_SOCKET;
 	private final String MYURL;
 	
-	private Map<String, TCPSender> myConnections = new HashMap<String, TCPSender>();
+	private Map<String, String[]> connections;
+	private Map<String, TCPSender> myConnections;
 	private CrawlerThreadPool myPool;
 	private EventFactory ef = EventFactory.getInstance();
 	private boolean debug = false;
@@ -64,7 +64,9 @@ public class Crawler implements Node{
 	 * @throws IOException 
 	 */
 	public Crawler(int port, int poolSize, String crawlUrl, String configPath) throws IOException{
-
+		// Initialize our containers for other Crawler connections
+		connections = new HashMap<String, String[]>();
+		myConnections = new HashMap<String, TCPSender>();
 		// Send only the www.root_url.com portion of URL for easier checking
 		// Checking for special case for Psych dept.
 		String rootUrl = crawlUrl.split("/")[2];
@@ -94,7 +96,7 @@ public class Crawler implements Node{
 					String cleanUrl = connectionRootUrl.split("/")[2];
 					if(cleanUrl.equals("www.colostate.edu"))
 						cleanUrl = "www.colostate.edu/Depts/Psychology";
-					CONNECTIONS.put(cleanUrl, connection);
+					connections.put(cleanUrl, connection);
 				}			
 
 			}catch(ArrayIndexOutOfBoundsException e){} // Catch out of bounds error to prevent program termination
@@ -159,8 +161,8 @@ public class Crawler implements Node{
 	 */
 	public boolean setupConnections(){
 		boolean success = true;
-		synchronized(CONNECTIONS){
-			for (Map.Entry<String, String[]> entry : CONNECTIONS.entrySet()) {
+		synchronized(connections){
+			for (Map.Entry<String, String[]> entry : connections.entrySet()) {
 				String rootUrl = entry.getKey();
 				String[] connection = entry.getValue();
 				Socket socket;
@@ -169,11 +171,11 @@ public class Crawler implements Node{
 					myConnections.put(rootUrl, new TCPSender(socket));
 				} catch (UnknownHostException e) {
 					success = false;
-					System.out.println("Error connecting to client, unknown host error occurred: ");
+					System.out.println("Error connecting to crawler "+ connection[0] +", unknown host error occurred: ");
 					System.err.println(e.getMessage());
 				} catch (IOException e) {
 					success = false;
-					System.out.println("Error connecting to client: ");
+					System.out.println("Error connecting to crawler " + connection[0] +": ");
 					System.err.println(e.getMessage());
 				}
 			}
