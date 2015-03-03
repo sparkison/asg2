@@ -441,6 +441,15 @@ public class Crawler implements Node{
 			System.out.println("\n******************************\n\n");
 		}
 	}
+	
+	/**
+	 * Helper method to determine which Crawler this is
+	 */
+	public void whoAmI(){
+		System.out.println("\n\n******************************\n");
+		System.out.println(" I am Crawler: " + MYURL);
+		System.out.println("\n******************************\n\n");
+	}
 
 	/**
 	 * Stop listening for other Crawlers, kill threads in pool, and close down
