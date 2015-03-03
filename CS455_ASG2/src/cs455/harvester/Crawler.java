@@ -324,7 +324,7 @@ public class Crawler implements Node{
 			if(debug)
 				System.out.println("\n\n**************************************************\n "
 						+ "Received task from crawler ["+ originatingUrl+"] "
-								+ "\n**************************************************\n\n");
+						+ "\n**************************************************\n\n");
 
 			CrawlerTask newTask = new CrawlerTask(RECURSION_DEPTH, urlToCrawl, parentUrl, MYURL, myPool, originatingUrl);
 			myPool.submit(newTask);
@@ -342,7 +342,9 @@ public class Crawler implements Node{
 				for (String key : myConnections.keySet()) {
 					if (crawlUrl.contains(key)) {
 						if(debug)
-							System.out.println("Crawler found, sending task to Crawler" + key);
+							System.out.println("\n\n**************************************************\n"
+									+ "Sending task to Crawler " + key
+									+ "\n**************************************************\n\n");
 						/*
 						 * Need to keep track of forwarded tasks.
 						 * Check to see if we've already added this Crawler, if not add it and
@@ -354,7 +356,8 @@ public class Crawler implements Node{
 					}
 				}
 			} catch (IOException e) {
-				e.printStackTrace();
+				// e.printStackTrace();
+				System.out.println("Connection to Crawler lost, removing from list...");
 			}
 		}
 	}
