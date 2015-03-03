@@ -50,7 +50,6 @@ public class CrawlerTask implements Task {
 			URLExtractor(crawlUrl, newDepth);
 		}else{
 			// We've reached the recursion depth, mark task as complete
-			System.out.println("\n\n*********************\nCrawler reported task complete!!\n*********************");
 			crawlerPool.taskComplete();
 		}
 	}
