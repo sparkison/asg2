@@ -174,8 +174,12 @@ public class CrawlerThreadPool{
 			// Add task to queue, if we haven't already crawled it
 			synchronized(TASK_LOCK){
 				if(!(crawled.contains(task.getCrawlUrl()))){
+					// Reset completion status, if previously set to complete
+					resetComplete();
+					
 					if(debug)
 						System.out.println("Task added: " + task);
+					
 					TASKS.add(task);
 					ADJACENCY.addEdge(task.getParentUrl(), task.getCrawlUrl());
 					crawled.add(task.getCrawlUrl());

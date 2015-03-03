@@ -46,8 +46,6 @@ public class CrawlerTask implements Task {
 		// Check to make sure we haven't reached max depth
 		int newDepth = RECURSION_DEPTH - 1;
 		if(newDepth > 0){
-			// Not yet complete, make sure pool knows we're not done yet
-			CRAWLER_POOL.resetComplete();
 			// Crawl URL
 			URLExtractor(CRAWL_URL, newDepth);
 		}

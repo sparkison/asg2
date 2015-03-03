@@ -123,13 +123,13 @@ public class Crawler implements Node{
 
 		// Need to sleep for 10 seconds before starting up
 		try {
-			Thread.sleep(2000);	//TODO Need to change this to 10 seconds instead of 2
+			Thread.sleep(5000);	//TODO Need to change this to 10 seconds instead of 2
 		} catch (InterruptedException e) {
 			System.err.println(e.getMessage());
 		}
 
 		// Setup connections to other Crawlers
-		//setupConnections();
+		setupConnections();
 
 		String type = "internal";
 		CrawlerTask task1 = new CrawlerTask(RECURSION_DEPTH, myUrl, myUrl, MYURL, myPool, type);
@@ -336,7 +336,7 @@ public class Crawler implements Node{
 		synchronized(connections){
 			try {
 				for (String key : myConnections.keySet()) {
-					if(crawlUrl.contains(key)){
+					if (crawlUrl.contains(key)) {
 						if(debug)
 							System.out.println("Crawler found, sending task to Crawler" + key);
 						/*
@@ -389,7 +389,7 @@ public class Crawler implements Node{
 				return false;
 		}
 		if(debug)
-			System.out.println("\n\n*************************\n CRAWLER COMPLETED ALL TASKS \n*************************\n\n");
+			System.out.println("\n\n******************************\n CRAWLER COMPLETED ALL TASKS \n******************************\n\n");
 		return true;
 	}
 
