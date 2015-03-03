@@ -65,6 +65,7 @@ public class Crawler implements Node{
 	public Crawler(int port, int poolSize, String crawlUrl, String configPath) throws IOException{
 
 		// Send only the www.root_url.com portion of URL for easier checking
+		// Checking for special case for Psych dept.
 		String rootUrl = crawlUrl.split("/")[2];
 		if(rootUrl.equals("www.colostate.edu"))
 			MYURL = "www.colostate.edu/Depts/Psychology";
@@ -85,8 +86,9 @@ public class Crawler implements Node{
 				 * Using HasMap, key is the RootURL of the connection, value is a String[]
 				 * where String[0] = host and String[1] = port
 				 * Extra check to make sure we don't add ourself to the list
+				 * 
+				 * Also need extra step for Psych dept.
 				 */
-				//System.out.println(connectionRootUrl.split("/")[2]);
 				if(!(connectionRootUrl.equals(crawlUrl))){
 					String cleanUrl = connectionRootUrl.split("/")[2];
 					if(cleanUrl.equals("www.colostate.edu"))

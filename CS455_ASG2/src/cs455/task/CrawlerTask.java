@@ -42,10 +42,10 @@ public class CrawlerTask implements Task {
 	@Override
 	public void start() {
 		// Check to make sure we haven't reached max depth
-		if(recursionDepth > 0){
+		int newDepth = recursionDepth - 1;
+		if(newDepth > 0){
 			// Not yet complete, make sure pool knows we're not done yet
 			crawlerPool.resetComplete();
-			int newDepth = recursionDepth - 1;
 			// Crawl URL
 			URLExtractor(crawlUrl, newDepth);
 		}else{
