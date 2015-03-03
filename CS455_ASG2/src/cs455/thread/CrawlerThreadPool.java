@@ -57,7 +57,7 @@ public class CrawlerThreadPool{
 		}
 
 		// Create the root folder for this Crawler
-		File file = new File(DIRECTORY_ROOT + CRAWLER.getRootUrl() + "/nodes");
+		File file = new File(DIRECTORY_ROOT + CRAWLER.getRootUrl().replaceAll("[^a-zA-Z0-9._-]", "-") + "/nodes");
 		if (!file.exists()) {
 			if (file.mkdirs()) {
 				//System.out.println("Directory is created!");
@@ -74,6 +74,7 @@ public class CrawlerThreadPool{
 	 * report complete.
 	 */
 	public void checkCompletionStatus(){
+
 		Thread completionChecker = new Thread(new Runnable() {
 			public void run() {
 				try {
@@ -92,7 +93,7 @@ public class CrawlerThreadPool{
 		});  
 		completionChecker.start();
 	}
-	
+
 	/**
 	 * Getters
 	 */
@@ -170,8 +171,8 @@ public class CrawlerThreadPool{
 					if(debug)
 						System.out.println("Task added: " + task);
 					TASKS.add(task);
-					crawled.add(task.getCrawlUrl());
 					ADJACENCY.addEdge(task.getParentUrl(), task.getCrawlUrl());
+					crawled.add(task.getCrawlUrl());
 				}
 			}
 			// If any THREADS waiting, notify task added to queue

@@ -24,20 +24,19 @@ public class CrawlerTask implements Task {
 
 	// Instance variables **************
 	private final int RECURSION_DEPTH;
-	
-	private String parentUrl;
-	private String crawlUrl;
-	private String rootUrl;
-	private CrawlerThreadPool crawlerPool;
+	private final String PARENT_URL;
+	private final String CRAWL_URL;
+	private final String ROOT_URL;
+	private final CrawlerThreadPool CRAWLER_POOL;
 
-	public CrawlerTask(int RECURSION_DEPTH, String crawlUrl, String parentUrl, String rootUrl, CrawlerThreadPool crawlerPool){
+	public CrawlerTask(int RECURSION_DEPTH, String CRAWL_URL, String PARENT_URL, String ROOT_URL, CrawlerThreadPool CRAWLER_POOL){
 		// Setting recursion depth to negative so we can increment up to 0
 		// to make things more intuitive
 		this.RECURSION_DEPTH = RECURSION_DEPTH;
-		this.crawlUrl = relativeToAbs(parentUrl, crawlUrl);
-		this.parentUrl = parentUrl;
-		this.rootUrl = rootUrl;
-		this.crawlerPool = crawlerPool;
+		this.CRAWL_URL = relativeToAbs(PARENT_URL, CRAWL_URL);
+		this.PARENT_URL = PARENT_URL;
+		this.ROOT_URL = ROOT_URL;
+		this.CRAWLER_POOL = CRAWLER_POOL;
 	}
 
 	@Override
@@ -46,12 +45,12 @@ public class CrawlerTask implements Task {
 		int newDepth = RECURSION_DEPTH - 1;
 		if(newDepth > 0){
 			// Not yet complete, make sure pool knows we're not done yet
-			crawlerPool.resetComplete();
+			CRAWLER_POOL.resetComplete();
 			// Crawl URL
-			URLExtractor(crawlUrl, newDepth);
+			URLExtractor(CRAWL_URL, newDepth);
 		}else{
 			// We've reached the recursion depth, mark task as complete
-			crawlerPool.taskComplete();
+			CRAWLER_POOL.taskComplete();
 		}
 	}
 
@@ -71,13 +70,13 @@ public class CrawlerTask implements Task {
 			for (Element aTag : aTags) {
 				if(aTag != null){
 					String pageLink = aTag.getAttributeValue("href").toString();
-					if(pageLink.contains(rootUrl)) {
+					if(pageLink.contains(ROOT_URL)) {
 						// URL is a local URL, parse it
-						CrawlerTask task = new CrawlerTask(depth, pageLink, pageUrl, rootUrl, crawlerPool);
-						crawlerPool.submit(task);
+						CrawlerTask task = new CrawlerTask(depth, pageLink, pageUrl, ROOT_URL, CRAWLER_POOL);
+						CRAWLER_POOL.submit(task);
 					} else {
 						// Need to forward it on...
-						crawlerPool.forward(this, pageLink);
+						CRAWLER_POOL.forward(this, pageLink);
 					}
 				}				
 			}
@@ -123,32 +122,32 @@ public class CrawlerTask implements Task {
 	}
 	
 	/**
-	 * @return the crawlUrl
+	 * @return the CRAWL_URL
 	 */
 	public String getCrawlUrl() {
-		return new String(crawlUrl);
+		return new String(CRAWL_URL);
 	}
 	
 	/**
-	 * @return the rootUrl
+	 * @return the ROOT_URL
 	 */
 	public String getRootUrl() {
-		return new String(rootUrl);
+		return new String(ROOT_URL);
 	}
 
 	/**
-	 * @return the parentUrl
+	 * @return the PARENT_URL
 	 */
 	public String getParentUrl() {
-		return new String(parentUrl);
+		return new String(PARENT_URL);
 	}
 
 	@Override
 	public String toString() {
 		return "CrawlerTask [RECURSION_DEPTH=" + RECURSION_DEPTH + ", "
-				+ (crawlUrl != null ? "crawlUrl=" + crawlUrl + ", " : "")
-				+ (parentUrl != null ? "parentUrl=" + parentUrl + ", " : "")
-				+ (rootUrl != null ? "rootUrl=" + rootUrl : "") + "]";
+				+ (CRAWL_URL != null ? "CRAWL_URL=" + CRAWL_URL + ", " : "")
+				+ (PARENT_URL != null ? "PARENT_URL=" + PARENT_URL + ", " : "")
+				+ (ROOT_URL != null ? "ROOT_URL=" + ROOT_URL : "") + "]";
 	}
 
 	@Override
@@ -156,8 +155,8 @@ public class CrawlerTask implements Task {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result
-				+ ((crawlUrl == null) ? 0 : crawlUrl.hashCode());
-		result = prime * result + ((rootUrl == null) ? 0 : rootUrl.hashCode());
+				+ ((CRAWL_URL == null) ? 0 : CRAWL_URL.hashCode());
+		result = prime * result + ((ROOT_URL == null) ? 0 : ROOT_URL.hashCode());
 		return result;
 	}
 
@@ -173,18 +172,18 @@ public class CrawlerTask implements Task {
 			return false;
 		}
 		CrawlerTask other = (CrawlerTask) obj;
-		if (crawlUrl == null) {
-			if (other.crawlUrl != null) {
+		if (CRAWL_URL == null) {
+			if (other.CRAWL_URL != null) {
 				return false;
 			}
-		} else if (!crawlUrl.equals(other.crawlUrl)) {
+		} else if (!CRAWL_URL.equals(other.CRAWL_URL)) {
 			return false;
 		}
-		if (rootUrl == null) {
-			if (other.rootUrl != null) {
+		if (ROOT_URL == null) {
+			if (other.ROOT_URL != null) {
 				return false;
 			}
-		} else if (!rootUrl.equals(other.rootUrl)) {
+		} else if (!ROOT_URL.equals(other.ROOT_URL)) {
 			return false;
 		}
 		return true;

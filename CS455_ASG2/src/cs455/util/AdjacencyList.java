@@ -81,7 +81,7 @@ public class AdjacencyList {
 		String[] temp = directoryName.split("/");
 		directoryName = "";
 		for(int i = 1; i<temp.length; i++){
-			directoryName += temp[i].replaceAll("[^a-zA-Z0-9.]", "-");
+			directoryName += temp[i].replaceAll("[^a-zA-Z0-9._-]", "-");
 			if(i != temp.length-1)
 				directoryName += "-";
 		}
