@@ -280,7 +280,7 @@ public class Crawler implements Node{
 			CrawlerSendsFinished crawlerFinished = (CrawlerSendsFinished)e;
 			crawlersComplete.put(crawlerFinished.getOriginatingUrl(), true);
 			// Send finished message if done
-			crawlerSendsFinished();
+			allCrawlerCompleted();
 		}
 	}
 
@@ -405,21 +405,46 @@ public class Crawler implements Node{
 	/**
 	 * Check that all conditions for completion have been met
 	 * If ANY of the crawlers haven't reported complete, or
-	 * ANY of the tasks forwarded haven't reported finished, or
-	 * ANY of this Crawlers tasks aren't complete, then
-	 * return FALSE
+	 * ANY of the tasks forwarded haven't reported finished
+	 * return false.
+	 * 
+	 * The third condition needs to be checked separately.
+	 * @return boolean status
 	 */
 	public boolean completionCheck(){
 		synchronized(connections){
-			if(crawlersComplete.containsValue(false))
-				return false;
+			/*
+			 * This caused a hold forever, b/c each Crawler
+			 * was waiting on other one to finish.
+			 * 
+			 * Need to do another check after I sent completion.
+			 */
 			if(forwardedTasks.containsValue(false))
 				return false;
 			if(!(myPool.isComplete()))
 				return false;
 		}
+		return true;
+	}
+	
+	/**
+	 * This is the final check. If the above conditions hold,
+	 * and all Crawlers report finished, then harvesting is complete.
+	 * @return boolean status
+	 */
+	private boolean allCrawlerCompleted(){
+		if(!completionCheck())
+			return false;
+		if(crawlersComplete.containsValue(false))
+			return false;
+		
 		if(debug)
 			System.out.println("\n\n******************************\n CRAWLER COMPLETED ALL TASKS \n******************************\n\n");
+		/*
+		 * If here, everything has successfully completed!!
+		 * All my tasks are done, and all other Crawlers have reported
+		 * to me they're complete.
+		 */
 		return true;
 	}
 
