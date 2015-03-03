@@ -36,7 +36,7 @@ public class Crawler implements Node{
 	private Map<String, TCPSender> myConnections = new HashMap<String, TCPSender>();
 	private CrawlerThreadPool myPool;
 	private EventFactory ef = EventFactory.getInstance();
-	private boolean debug = true;
+	private boolean debug = false;
 
 	public static void main(String[] args) throws InterruptedException {
 		if(args.length < 3){

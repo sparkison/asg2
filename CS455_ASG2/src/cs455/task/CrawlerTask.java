@@ -8,7 +8,6 @@ package cs455.task;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -34,7 +33,7 @@ public class CrawlerTask implements Task {
 		// Setting recursion depth to negative so we can increment up to 0
 		// to make things more intuitive
 		this.recursionDepth = recursionDepth;
-		this.crawlUrl = crawlUrl;
+		this.crawlUrl = relativeToAbs(parentUrl, crawlUrl);
 		this.parentUrl = parentUrl;
 		this.rootUrl = rootUrl;
 		this.crawlerPool = crawlerPool;
@@ -76,10 +75,6 @@ public class CrawlerTask implements Task {
 						// URL is a local URL, parse it
 						CrawlerTask task = new CrawlerTask(depth, pageLink, pageUrl, rootUrl, crawlerPool);
 						crawlerPool.submit(task);
-					} else if(pageLink.charAt(0) == '#' || pageLink.charAt(0) == '/' || pageLink.charAt(0) == '.'){
-						// URL is a relative URL, parse it
-						CrawlerTask task = new CrawlerTask(depth, relativeToAbs(pageUrl, pageLink), pageUrl, rootUrl, crawlerPool);
-						crawlerPool.submit(task);
 					} else {
 						// Need to forward it on...
 						crawlerPool.forward(this, pageLink);
@@ -88,23 +83,6 @@ public class CrawlerTask implements Task {
 			}
 
 		} catch (IOException e) {} // in case of malformed url
-	}
-
-	/**
-	 * Returns an absolute URL based on root and realtive URL passed
-	 * @param String root
-	 * @param String relative
-	 * @return String absolute
-	 */
-	private String relativeToAbs(String root, String relative){
-		String absolute = "";
-		try {
-			if(!new URI(relative).isAbsolute()){
-				URI resolvedUrl = new URI(root).resolve(relative);
-				absolute = resolvedUrl.toString();
-			}
-		} catch (URISyntaxException e1) {}
-		return absolute;
 	}
 
 	/**
@@ -126,12 +104,31 @@ public class CrawlerTask implements Task {
 	}
 
 	/**
+	 * Returns an absolute URL based on root and relative URL passed
+	 * @param String root
+	 * @param String relative
+	 * @return String absolute
+	 */
+	private String relativeToAbs(String parent, String relative){
+		String absolute = "";
+		try {
+			if(!new URI(relative).isAbsolute()){
+				URI resolvedUrl = new URI(parent).resolve(relative);
+				absolute = resolvedUrl.toString();
+			} else {
+				absolute = relative;
+			}
+		} catch (URISyntaxException e1) {}
+		return absolute;
+	}
+	
+	/**
 	 * @return the crawlUrl
 	 */
 	public String getCrawlUrl() {
 		return new String(crawlUrl);
 	}
-
+	
 	/**
 	 * @return the rootUrl
 	 */
