@@ -20,6 +20,7 @@ import cs455.task.CrawlerTask;
 import cs455.thread.CrawlerThreadPool;
 import cs455.transport.TCPReceiverThread;
 import cs455.transport.TCPSender;
+import cs455.util.CommandParser;
 import cs455.wireformats.CrawlerSendsFinished;
 import cs455.wireformats.CrawlerSendsIncomplete;
 import cs455.wireformats.CrawlerSendsTask;
@@ -120,6 +121,11 @@ public class Crawler implements Node{
 		// Display success message
 		System.out.println("Crawler listening for connections on port: " + port);
 
+		if(debug){
+			CommandParser parser = new CommandParser(this);
+			parser.start();
+		}
+			
 		// Need to sleep for 10 seconds before starting up
 		try {
 			Thread.sleep(5000);	//TODO Need to change this to 10 seconds instead of 2
@@ -226,15 +232,19 @@ public class Crawler implements Node{
 
 		case Protocol.CRAWLER_SENDS_TASK:
 			receiveTaskFromCrawler(event);
+			break;
 
 		case Protocol.CRAWLER_SENDS_TASK_COMPLETE:
 			crawlerReceivesTaskComplete(event);
+			break;
 
 		case Protocol.CRAWLER_SENDS_FINISHED:
 			crawlerReceivesFinished(event);
+			break;
 
 		case Protocol.CRAWLER_SENDS_INCOMPLETE:
 			crawlerReceivesIncomplete(event);
+			break;
 
 		default:
 			System.out.println("Unrecognized event type received.");
@@ -269,6 +279,7 @@ public class Crawler implements Node{
 		synchronized(connections){
 			CrawlerSendsFinished crawlerFinished = (CrawlerSendsFinished)e;
 			crawlersComplete.put(crawlerFinished.getOriginatingUrl(), true);
+			// Send finished message if done
 			crawlerSendsFinished();
 		}
 	}
@@ -291,6 +302,7 @@ public class Crawler implements Node{
 		synchronized(connections){
 			CrawlerSendsTaskComplete taskComplete = (CrawlerSendsTaskComplete)e;
 			forwardedTasks.put(taskComplete.getOriginatingUrl(), true);
+			// Send finished message if done
 			crawlerSendsFinished();
 		}
 	}
@@ -311,6 +323,8 @@ public class Crawler implements Node{
 			} else {
 				System.out.println("Unable to send notification to client. Not in connections list.");
 			}
+			// Send finished message if done
+			crawlerSendsFinished();
 		}
 	}
 
@@ -407,6 +421,25 @@ public class Crawler implements Node{
 		if(debug)
 			System.out.println("\n\n******************************\n CRAWLER COMPLETED ALL TASKS \n******************************\n\n");
 		return true;
+	}
+
+	/**
+	 * Helper method, will print out statuses
+	 */
+	public void printCompletionReport(){
+		synchronized(connections){
+			System.out.println("\n\n******************************\n");
+			System.out.println("Completion status of other Crawlers:\n");
+			for (String key : crawlersComplete.keySet()) {
+				System.out.println(key + " " + crawlersComplete.get(key));
+			}
+			System.out.println("\nForwarded tasks completion status:\n");
+			for (String key : forwardedTasks.keySet()) {
+				System.out.println(key + " " + forwardedTasks.get(key));
+			}
+			System.out.println("\nThreadPool status: " + myPool.isComplete());
+			System.out.println("\n******************************\n\n");
+		}
 	}
 
 	/**

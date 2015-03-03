@@ -176,13 +176,15 @@ public class CrawlerThreadPool{
 				if(!(crawled.contains(task.getCrawlUrl()))){
 					// Reset completion status, if previously set to complete
 					resetComplete();
+					// Mark as crawled to prevent duplicate crawling
+					crawled.add(task.getCrawlUrl());
 					
 					if(debug)
 						System.out.println("Task added: " + task);
 					
+					// Add the task, and add it to our adjacency list
 					TASKS.add(task);
 					ADJACENCY.addEdge(task.getParentUrl(), task.getCrawlUrl());
-					crawled.add(task.getCrawlUrl());
 				} else {
 					/*
 					 * Already crawled
