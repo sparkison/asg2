@@ -38,13 +38,10 @@ public class CommandParser extends Thread {
 
 		if(message.startsWith("status"))
 			crawler.printCompletionReport();
-		
 		else if(message.startsWith("who"))
 			crawler.whoAmI();
-		
 		else
 			System.out.println("Command not recognized");
-
 	}
 
 }
