@@ -83,7 +83,7 @@ public class CrawlerThreadPool{
 						if(TASKS.isEmpty() && !complete){
 							taskComplete();
 							if(debug)
-								System.out.println("\n\n*************************\n NODE COMPLETED TASKS \n*************************\n\n");
+								System.out.println("\n\n*************************\n CRAWLER COMPLETED ALL TASKS \n*************************\n\n");
 						}
 					}	
 				} catch (InterruptedException e) {

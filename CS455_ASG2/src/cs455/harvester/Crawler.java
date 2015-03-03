@@ -32,13 +32,13 @@ public class Crawler implements Node{
 	private final int RECURSION_DEPTH = 5;
 	private final ServerSocket SERVER_SOCKET;
 	private final String MYURL;
-	
+
 	private Map<String, String[]> connections;
 	private Map<String, TCPSender> myConnections;
 	private CrawlerThreadPool myPool;
 	private EventFactory ef = EventFactory.getInstance();
 	private int taskCount = 0;
-	private boolean debug = false;
+	private boolean debug = true;
 
 	public static void main(String[] args) throws InterruptedException {
 		if(args.length < 3){
@@ -124,7 +124,8 @@ public class Crawler implements Node{
 		// Setup connections to other Crawlers
 		//setupConnections();
 		
-		CrawlerTask t1 = new CrawlerTask(RECURSION_DEPTH, crawlUrl, crawlUrl, MYURL, myPool);
+		String type = "internal";
+		CrawlerTask t1 = new CrawlerTask(RECURSION_DEPTH, crawlUrl, crawlUrl, MYURL, myPool, type);
 		myPool.submit(t1);
 	}
 
@@ -237,9 +238,9 @@ public class Crawler implements Node{
 		//TODO need to keep track of originating URL so we can send confirmation when task complete
 
 		if(debug)
-			System.out.println("Received task from Crawler: " + parentUrl);
-		
-		CrawlerTask newTask = new CrawlerTask(RECURSION_DEPTH, urlToCrawl, parentUrl, MYURL, myPool);
+			System.out.println("\n\n*************************\n Received task from crawler "+ originatingUrl+" \n*************************\n\n");
+
+		CrawlerTask newTask = new CrawlerTask(RECURSION_DEPTH, urlToCrawl, parentUrl, MYURL, myPool, originatingUrl);
 		myPool.submit(newTask);
 	}
 

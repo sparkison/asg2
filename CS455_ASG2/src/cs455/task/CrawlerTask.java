@@ -27,16 +27,18 @@ public class CrawlerTask implements Task {
 	private final String PARENT_URL;
 	private final String CRAWL_URL;
 	private final String ROOT_URL;
+	private final String TYPE;
 	private final CrawlerThreadPool CRAWLER_POOL;
 
-	public CrawlerTask(int RECURSION_DEPTH, String CRAWL_URL, String PARENT_URL, String ROOT_URL, CrawlerThreadPool CRAWLER_POOL){
+	public CrawlerTask(int recursionDepth, String crawlUrl, String parentUrl, String rootUrl, CrawlerThreadPool crawlerPool, String type){
 		// Setting recursion depth to negative so we can increment up to 0
 		// to make things more intuitive
-		this.RECURSION_DEPTH = RECURSION_DEPTH;
-		this.CRAWL_URL = relativeToAbs(PARENT_URL, CRAWL_URL);
-		this.PARENT_URL = PARENT_URL;
-		this.ROOT_URL = ROOT_URL;
-		this.CRAWLER_POOL = CRAWLER_POOL;
+		RECURSION_DEPTH = recursionDepth;
+		CRAWL_URL = relativeToAbs(parentUrl, crawlUrl);
+		PARENT_URL = parentUrl;
+		ROOT_URL = rootUrl;
+		TYPE = type;
+		CRAWLER_POOL = crawlerPool;
 	}
 
 	@Override
@@ -65,11 +67,14 @@ public class CrawlerTask implements Task {
 
 			// get the URL ("href" attribute) in each 'a' tag
 			for (Element aTag : aTags) {
-				if(aTag != null){
+				if (aTag != null){
 					String pageLink = aTag.getAttributeValue("href").toString();
-					if(pageLink.contains(ROOT_URL) || pageLink.charAt(0) == '/' || pageLink.charAt(0) == '.' || pageLink.charAt(0) == '#') {
+					if (pageLink.contains(ROOT_URL) || pageLink.charAt(0) == '/' || pageLink.charAt(0) == '.' || pageLink.charAt(0) == '#') {
 						// URL is a local URL, parse it
-						CrawlerTask task = new CrawlerTask(depth, pageLink, pageUrl, ROOT_URL, CRAWLER_POOL);
+						if (!(TYPE.equals("internal"))) {
+							
+						}	
+						CrawlerTask task = new CrawlerTask(depth, pageLink, pageUrl, ROOT_URL, CRAWLER_POOL, "internal");
 						CRAWLER_POOL.submit(task);
 					} else {
 						// Need to forward it on...
