@@ -8,5 +8,5 @@ do
 	IFS=- read host url <<< "$i"
 
         echo 'logging into '$host', using url '$url
-	gnome-terminal -x bash -c "ssh -t $host 'cd $test_home; java -cp .:$test_home/jericho-html-3.3.jar cs455.harvester.Crawler 44947 10 $url $test_home/config;bash;'" &
+	gnome-terminal -x bash -c "ssh -t $host 'cd $test_home; java -cp .:$test_home/jericho-html-3.3.jar cs455.harvester.Crawler 44947 20 $url $test_home/config;bash;'" &
 done
