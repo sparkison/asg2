@@ -104,12 +104,14 @@ public class Crawler implements Node{
 					if(cleanUrl.equals("www.colostate.edu"))
 						cleanUrl = "www.colostate.edu/Depts/Psychology";
 					connections.put(cleanUrl, connection);
-					crawlersComplete.put(cleanUrl, false);
 				}			
 
 			}catch(ArrayIndexOutOfBoundsException e){} // Catch out of bounds error to prevent program termination
 
 		}
+
+		// Instantiate the ThreadPool
+		myPool = new CrawlerThreadPool(poolSize, this);
 
 		// Open ServerSocket to accept data from other Messaging Nodes
 		this.SERVER_SOCKET = new ServerSocket(port);
@@ -117,9 +119,6 @@ public class Crawler implements Node{
 
 		// Display success message
 		System.out.println("Crawler listening for connections on port: " + port);
-
-		// Instantiate the ThreadPool
-		myPool = new CrawlerThreadPool(poolSize, this);
 
 		// Need to sleep for 10 seconds before starting up
 		try {
@@ -179,7 +178,12 @@ public class Crawler implements Node{
 					socket = new Socket(connection[0], Integer.parseInt(connection[1]));
 					TCPSender sender = new TCPSender(socket);
 					sender.start();
+					/*
+					 * If here, setup successful, add connection to connections list,
+					 * and set completion tracker list to false for this entry
+					 */
 					myConnections.put(rootUrl, sender);
+					crawlersComplete.put(rootUrl, false);
 				} catch (UnknownHostException e) {
 					success = false;
 					System.out.println("Error connecting to crawler "+ connection[0] +", unknown host error occurred: ");
