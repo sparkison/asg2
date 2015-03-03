@@ -10,7 +10,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.locks.ReentrantLock;
 
 import cs455.harvester.Crawler;
 import cs455.task.CrawlerTask;
@@ -28,7 +27,7 @@ public class CrawlerThreadPool{
 	private final LinkedList<CrawlerTask> tasks;
 	private final AdjacencyList adjacency;
 	private final Crawler crawler;
-	private final ReentrantLock taskLock = new ReentrantLock();
+	private final Object taskLock = new Object();
 
 	private List<String> crawled = new ArrayList<String>();
 	private Object waitLock = new Object();
@@ -123,12 +122,9 @@ public class CrawlerThreadPool{
 	 * @return CrawlTask
 	 */
 	public CrawlerTask removeFromQueue() {
-		taskLock.lock();
-		try{
+		synchronized(taskLock){
 			return tasks.poll();
-		} finally {
-			taskLock.unlock();
-		}
+		}		
 	}
 
 	/**
@@ -137,16 +133,13 @@ public class CrawlerThreadPool{
 	 */
 	public void submit(CrawlerTask task) {
 		if(!shutDown) {
-			taskLock.lock();
 			// Add task to queue, if we haven't already crawled it
-			try{
+			synchronized(taskLock){
 				if(!(crawled.contains(task.getCrawlUrl()))){
 					tasks.add(task);
 					crawled.add(task.getCrawlUrl());
 					adjacency.addEdge(task.getParentUrl(), task.getCrawlUrl());
 				}
-			} finally {
-				taskLock.unlock();
 			}
 			// If any threads waiting, notify task added to queue
 			synchronized(waitLock){

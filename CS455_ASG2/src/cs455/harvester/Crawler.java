@@ -12,9 +12,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -65,8 +63,12 @@ public class Crawler implements Node{
 	 */
 	public Crawler(int port, int poolSize, String crawlUrl, String configPath) throws IOException{
 
-		// Send only the www.rooturl.com portion of URL for easier checking
-		MYURL = crawlUrl.split("/")[2];
+		// Send only the www.root_url.com portion of URL for easier checking
+		String rootUrl = crawlUrl.split("/")[2];
+		if(rootUrl.equals("www.colostate.edu"))
+			MYURL = "www.colostate.edu/Depts/Psychology";
+		else
+			MYURL = rootUrl;
 
 		// Path to configuration file
 		Path path = Paths.get(configPath);
@@ -86,18 +88,14 @@ public class Crawler implements Node{
 				//System.out.println(connectionRootUrl.split("/")[2]);
 				if(!(connectionRootUrl.equals(crawlUrl))){
 					String cleanUrl = connectionRootUrl.split("/")[2];
+					if(cleanUrl.equals("www.colostate.edu"))
+						cleanUrl = "www.colostate.edu/Depts/Psychology";
 					CONNECTIONS.put(cleanUrl, connection);
 				}			
 
 			}catch(ArrayIndexOutOfBoundsException e){} // Catch out of bounds error to prevent program termination
 
 		}
-
-		//		for (Map.Entry<String, String[]> entry : CONNECTIONS.entrySet()) {
-		//			String rootUrl = entry.getKey();
-		//			String[] connection = entry.getValue();
-		//			System.out.println("Connections:\n" + "Root URL of crawler: " + rootUrl + ", Connection info: " + connection[0] + ":" + connection[1] + "\n");
-		//		}
 
 		// Open ServerSocket to accept data from other Messaging Nodes
 		this.svSocket = new ServerSocket(port);
@@ -106,7 +104,7 @@ public class Crawler implements Node{
 		// Display success message
 		System.out.println("Crawler listening for connections on port: " + port);
 
-		// instantiate the ThreadPool
+		// Instantiate the ThreadPool
 		myPool = new CrawlerThreadPool(poolSize, this);
 
 		// Need to sleep for 10 seconds before starting up
@@ -116,6 +114,9 @@ public class Crawler implements Node{
 			System.err.println(e.getMessage());
 		}
 
+		// Setup connections to other Crawlers
+		//setupConnections();
+		
 		CrawlerTask t1 = new CrawlerTask(RECURSION_DEPTH, crawlUrl, crawlUrl, MYURL, myPool);
 		myPool.submit(t1);
 	}
