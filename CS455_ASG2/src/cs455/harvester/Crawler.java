@@ -31,8 +31,9 @@ public class Crawler implements Node{
 	// Instance variables **************
 	private final int RECURSION_DEPTH = 5;
 	private final Map<String, String[]> CONNECTIONS = new HashMap<String, String[]>();
-	private final ServerSocket svSocket;
+	private final ServerSocket SERVER_SOCKET;
 	private final String MYURL;
+	
 	private Map<String, TCPSender> myConnections = new HashMap<String, TCPSender>();
 	private CrawlerThreadPool myPool;
 	private EventFactory ef = EventFactory.getInstance();
@@ -101,7 +102,7 @@ public class Crawler implements Node{
 		}
 
 		// Open ServerSocket to accept data from other Messaging Nodes
-		this.svSocket = new ServerSocket(port);
+		this.SERVER_SOCKET = new ServerSocket(port);
 		listen();
 
 		// Display success message
@@ -136,7 +137,7 @@ public class Crawler implements Node{
 			public void run() {
 				while(true){
 					try {
-						Socket client = svSocket.accept();
+						Socket client = SERVER_SOCKET.accept();
 						/*
 						 * The messaging node doesn't need to assign id's
 						 * for record tracking, so defaulting to 0 for connectionID
@@ -269,7 +270,7 @@ public class Crawler implements Node{
 	public void stop(){
 		try {
 			myPool.stop();
-			svSocket.close();
+			SERVER_SOCKET.close();
 			System.exit(0);
 		} catch (IOException e) {
 			System.err.println(e.getMessage());

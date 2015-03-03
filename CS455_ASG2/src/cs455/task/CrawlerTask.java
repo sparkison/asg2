@@ -23,16 +23,17 @@ import cs455.thread.CrawlerThreadPool;
 public class CrawlerTask implements Task {
 
 	// Instance variables **************
-	private final int recursionDepth;
+	private final int RECURSION_DEPTH;
+	
 	private String parentUrl;
 	private String crawlUrl;
 	private String rootUrl;
 	private CrawlerThreadPool crawlerPool;
 
-	public CrawlerTask(int recursionDepth, String crawlUrl, String parentUrl, String rootUrl, CrawlerThreadPool crawlerPool){
+	public CrawlerTask(int RECURSION_DEPTH, String crawlUrl, String parentUrl, String rootUrl, CrawlerThreadPool crawlerPool){
 		// Setting recursion depth to negative so we can increment up to 0
 		// to make things more intuitive
-		this.recursionDepth = recursionDepth;
+		this.RECURSION_DEPTH = RECURSION_DEPTH;
 		this.crawlUrl = relativeToAbs(parentUrl, crawlUrl);
 		this.parentUrl = parentUrl;
 		this.rootUrl = rootUrl;
@@ -42,7 +43,7 @@ public class CrawlerTask implements Task {
 	@Override
 	public void start() {
 		// Check to make sure we haven't reached max depth
-		int newDepth = recursionDepth - 1;
+		int newDepth = RECURSION_DEPTH - 1;
 		if(newDepth > 0){
 			// Not yet complete, make sure pool knows we're not done yet
 			crawlerPool.resetComplete();
@@ -144,7 +145,7 @@ public class CrawlerTask implements Task {
 
 	@Override
 	public String toString() {
-		return "CrawlerTask [recursionDepth=" + recursionDepth + ", "
+		return "CrawlerTask [RECURSION_DEPTH=" + RECURSION_DEPTH + ", "
 				+ (crawlUrl != null ? "crawlUrl=" + crawlUrl + ", " : "")
 				+ (parentUrl != null ? "parentUrl=" + parentUrl + ", " : "")
 				+ (rootUrl != null ? "rootUrl=" + rootUrl : "") + "]";

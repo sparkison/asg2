@@ -23,41 +23,41 @@ public class CrawlerThreadPool{
 	private volatile boolean complete;
 
 	private final String DIRECTORY_ROOT = "/tmp/cs455-shaunpa/";
-	private final LinkedList<CrawlerThread> threads;
-	private final LinkedList<CrawlerTask> tasks;
-	private final AdjacencyList adjacency;
-	private final Crawler crawler;
-	private final Object taskLock = new Object();
+	private final LinkedList<CrawlerThread> THREADS;
+	private final LinkedList<CrawlerTask> TASKS;
+	private final AdjacencyList ADJACENCY;
+	private final Crawler CRAWLER;
+	private final Object TASK_LOCK = new Object();
+	private final Object WAIT_LOCK = new Object();
 
 	private List<String> crawled = new ArrayList<String>();
-	private Object waitLock = new Object();
 	private boolean debug = true;
 
 	/**
 	 * Main constructor for thread pool class
 	 * @param size
 	 */
-	public CrawlerThreadPool(int size, Crawler crawler) {
+	public CrawlerThreadPool(int size, Crawler CRAWLER) {
 		// Crawler associated with this pool
-		this.crawler = crawler;
-		// List of tasks to be performed
-		tasks = new LinkedList<CrawlerTask>();
-		// List of crawler threads
-		threads = new LinkedList<CrawlerThread>();
-		// Create our adjacency list to build out the graph
-		adjacency = new AdjacencyList(crawler.getRootUrl());
+		this.CRAWLER = CRAWLER;
+		// List of TASKS to be performed
+		TASKS = new LinkedList<CrawlerTask>();
+		// List of CRAWLER THREADS
+		THREADS = new LinkedList<CrawlerThread>();
+		// Create our ADJACENCY list to build out the graph
+		ADJACENCY = new AdjacencyList(CRAWLER.getRootUrl());
 		// Volatile boolean for shut down
 		shutDown = false;
 
-		// Loop to start crawler threads up
+		// Loop to start CRAWLER THREADS up
 		for(int i = 0; i<size; i++) {
 			CrawlerThread crawlThread = new CrawlerThread(this);
-			threads.add(crawlThread);
+			THREADS.add(crawlThread);
 			crawlThread.start();
 		}
 
 		// Create the root folder for this Crawler
-		File file = new File(DIRECTORY_ROOT + crawler.getRootUrl() + "/nodes");
+		File file = new File(DIRECTORY_ROOT + CRAWLER.getRootUrl() + "/nodes");
 		if (!file.exists()) {
 			if (file.mkdirs()) {
 				//System.out.println("Directory is created!");
@@ -69,13 +69,38 @@ public class CrawlerThreadPool{
 	}//END CrawlerThreadPool
 
 	/**
+	 * This thread will sleep for 5 seconds to allow other Threads
+	 * to continue polling the queue. If queue is still empty after 5 seconds
+	 * report complete.
+	 */
+	public void checkCompletionStatus(){
+		Thread completionChecker = new Thread(new Runnable() {
+			public void run() {
+				try {
+					Thread.sleep(5000);
+					synchronized(TASK_LOCK){
+						if(TASKS.isEmpty() && !complete){
+							taskComplete();
+							if(debug)
+								System.out.println("\n\n*************************\n NODE COMPLETED TASKS \n*************************\n\n");
+						}
+					}	
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		});  
+		completionChecker.start();
+	}
+	
+	/**
 	 * Getters
 	 */
 	public int getThreadPoolSize() {
-		return threads.size();
+		return THREADS.size();
 	}
 	public Object getWaitLock() {
-		return waitLock;
+		return WAIT_LOCK;
 	}
 
 	/**
@@ -87,7 +112,7 @@ public class CrawlerThreadPool{
 	}
 
 	/**
-	 * Tells whether this ThreadPool has finished all tasks
+	 * Tells whether this ThreadPool has finished all TASKS
 	 * @return
 	 */
 	public boolean isComplete() {
@@ -111,11 +136,11 @@ public class CrawlerThreadPool{
 	}
 
 	/**
-	 * Forward crawl task to other crawlers
+	 * Forward crawl task to other CRAWLERs
 	 * @param String
 	 */
 	public void forward(CrawlerTask task, String forwards){
-		crawler.sendTaskToCrawler(forwards);
+		CRAWLER.sendTaskToCrawler(forwards);
 	}
 
 	/**
@@ -123,8 +148,13 @@ public class CrawlerThreadPool{
 	 * @return CrawlTask
 	 */
 	public CrawlerTask removeFromQueue() {
-		synchronized(taskLock){
-			return tasks.poll();
+		synchronized(TASK_LOCK){
+			CrawlerTask task = TASKS.poll();
+			if(TASKS.isEmpty())
+				checkCompletionStatus();
+			else
+				resetComplete();
+			return task;
 		}		
 	}
 
@@ -135,18 +165,18 @@ public class CrawlerThreadPool{
 	public void submit(CrawlerTask task) {
 		if(!shutDown) {
 			// Add task to queue, if we haven't already crawled it
-			synchronized(taskLock){
+			synchronized(TASK_LOCK){
 				if(!(crawled.contains(task.getCrawlUrl()))){
 					if(debug)
 						System.out.println("Task added: " + task);
-					tasks.add(task);
+					TASKS.add(task);
 					crawled.add(task.getCrawlUrl());
-					adjacency.addEdge(task.getParentUrl(), task.getCrawlUrl());
+					ADJACENCY.addEdge(task.getParentUrl(), task.getCrawlUrl());
 				}
 			}
-			// If any threads waiting, notify task added to queue
-			synchronized(waitLock){
-				waitLock.notify();
+			// If any THREADS waiting, notify task added to queue
+			synchronized(WAIT_LOCK){
+				WAIT_LOCK.notify();
 			}
 		} else {
 			System.out.println("Unable to add task to queue, CrawlerThreadPool has shutdown...");
@@ -154,19 +184,19 @@ public class CrawlerThreadPool{
 	}
 
 	/**
-	 * Stop all threads, and shutdown
+	 * Stop all THREADS, and shutdown
 	 */
 	public void stop() {
-		// Call shutdown on all threads in pool
-		for(CrawlerThread crawlThread : threads) {
+		// Call shutdown on all THREADS in pool
+		for(CrawlerThread crawlThread : THREADS) {
 			crawlThread.shutdown();
 		}
-		// Notify all threads still waiting on lock to finish
-		synchronized (this.waitLock) {
-			waitLock.notifyAll();
+		// Notify all THREADS still waiting on lock to finish
+		synchronized (this.WAIT_LOCK) {
+			WAIT_LOCK.notifyAll();
 		}
-		// Finally, wait for all threads to complete tasks
-		for(CrawlerThread crawlThread : threads) {
+		// Finally, wait for all THREADS to complete TASKS
+		for(CrawlerThread crawlThread : THREADS) {
 			try {
 				crawlThread.join();
 			} catch (InterruptedException e) {
