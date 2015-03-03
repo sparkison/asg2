@@ -54,7 +54,6 @@ public class CrawlerTask implements Task {
 	}
 
 	public void URLExtractor(String url, int depth){
-
 		Config.LoggerProvider = LoggerProvider.DISABLED;
 		try {
 			// Web page that needs to be parsed,
@@ -70,10 +69,6 @@ public class CrawlerTask implements Task {
 				if (aTag != null){
 					String pageLink = aTag.getAttributeValue("href").toString();
 					if (pageLink.contains(ROOT_URL) || pageLink.charAt(0) == '/' || pageLink.charAt(0) == '.' || pageLink.charAt(0) == '#') {
-						// URL is a local URL, parse it
-						if (!(TYPE.equals("internal"))) {
-							
-						}	
 						CrawlerTask task = new CrawlerTask(depth, pageLink, pageUrl, ROOT_URL, CRAWLER_POOL, "internal");
 						CRAWLER_POOL.submit(task);
 					} else {
@@ -82,7 +77,9 @@ public class CrawlerTask implements Task {
 					}
 				}				
 			}
-
+			if (!(TYPE.equals("internal"))) {
+				CRAWLER_POOL.sendTaskComplete(ROOT_URL);
+			}
 		} catch (IOException e) {} // in case of malformed url
 	}
 
@@ -122,14 +119,14 @@ public class CrawlerTask implements Task {
 		} catch (URISyntaxException e1) {}
 		return absolute;
 	}
-	
+
 	/**
 	 * @return the CRAWL_URL
 	 */
 	public String getCrawlUrl() {
 		return new String(CRAWL_URL);
 	}
-	
+
 	/**
 	 * @return the ROOT_URL
 	 */

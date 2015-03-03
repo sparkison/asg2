@@ -30,11 +30,17 @@ public class EventFactory {
 			return new CrawlerSendsTask(type, eventMessage[0], eventMessage[1]);
 
 		case Protocol.CRAWLER_SENDS_TASK_COMPLETE:
-			break;
+			return new CrawlerSendsTaskComplete(type, message);
 
 		case Protocol.CRAWLER_SENDS_FINISHED:
-			break;
-
+			return new CrawlerSendsFinished(type, message);
+			
+		case Protocol.CRAWLER_SENDS_INCOMPLETE:
+			return new CrawlerSendsIncomplete(type, message);
+			
+		default:
+			System.out.println("Event type not recognized");
+			
 		}
 
 		return null;
@@ -54,10 +60,31 @@ public class EventFactory {
 			}
 
 		case Protocol.CRAWLER_SENDS_TASK_COMPLETE:
-			break;
+			try {
+				return new CrawlerSendsTaskComplete(data);
+			} catch (IOException e) {
+				System.out.println("Error creating CrawlerSendsTaskComplete event: ");
+				e.printStackTrace();
+			}
 
 		case Protocol.CRAWLER_SENDS_FINISHED:
-			break;
+			try {
+				return new CrawlerSendsFinished(data);
+			} catch (IOException e) {
+				System.out.println("Error creating CrawlerSendsFinished event: ");
+				e.printStackTrace();
+			}
+			
+		case Protocol.CRAWLER_SENDS_INCOMPLETE:
+			try {
+				return new CrawlerSendsIncomplete(data);
+			} catch (IOException e) {
+				System.out.println("Error creating CrawlerSendsIncomplete event: ");
+				e.printStackTrace();
+			}
+			
+		default:
+			System.out.println("Event type not recognized");
 
 		}
 

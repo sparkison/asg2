@@ -8,12 +8,12 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class CrawlerSendsFinished implements Event {
+public class CrawlerSendsIncomplete implements Event {
 
 	private int type;
 	private String originatingUrl;
 
-	public CrawlerSendsFinished(int type, String originatingUrl){
+	public CrawlerSendsIncomplete(int type, String originatingUrl){
 		this.type = type;
 		this.originatingUrl = originatingUrl;
 	}
@@ -48,7 +48,7 @@ public class CrawlerSendsFinished implements Event {
 	}
 
 	// Unmarshalling (unpack the bytes)
-	public CrawlerSendsFinished(byte[] marshalledBytes) throws IOException {
+	public CrawlerSendsIncomplete(byte[] marshalledBytes) throws IOException {
 		ByteArrayInputStream baInputStream = new ByteArrayInputStream(
 				marshalledBytes);
 		DataInputStream din = new DataInputStream(new BufferedInputStream(
@@ -76,7 +76,7 @@ public class CrawlerSendsFinished implements Event {
 	
 	@Override
 	public String toString() {
-		return "CrawlerSendsFinished [type=" + type + ", originatingUrl="
+		return "CrawlerSendsIncomplete [type=" + type + ", originatingUrl="
 				+ originatingUrl + "]";
 	}
 

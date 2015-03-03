@@ -20,7 +20,10 @@ import cs455.task.CrawlerTask;
 import cs455.thread.CrawlerThreadPool;
 import cs455.transport.TCPReceiverThread;
 import cs455.transport.TCPSender;
+import cs455.wireformats.CrawlerSendsFinished;
+import cs455.wireformats.CrawlerSendsIncomplete;
 import cs455.wireformats.CrawlerSendsTask;
+import cs455.wireformats.CrawlerSendsTaskComplete;
 import cs455.wireformats.Event;
 import cs455.wireformats.EventFactory;
 import cs455.wireformats.Protocol;
@@ -35,9 +38,10 @@ public class Crawler implements Node{
 
 	private Map<String, String[]> connections;
 	private Map<String, TCPSender> myConnections;
+	private Map<String, Boolean> forwardedTasks;
+	private Map<String, Boolean> crawlersComplete;
 	private CrawlerThreadPool myPool;
 	private EventFactory ef = EventFactory.getInstance();
-	private int taskCount = 0;
 	private boolean debug = true;
 
 	public static void main(String[] args) throws InterruptedException {
@@ -64,13 +68,15 @@ public class Crawler implements Node{
 	 * @param configPath
 	 * @throws IOException 
 	 */
-	public Crawler(int port, int poolSize, String crawlUrl, String configPath) throws IOException{
+	public Crawler(int port, int poolSize, String myUrl, String configPath) throws IOException{
 		// Initialize our containers for other Crawler connections
 		connections = new HashMap<String, String[]>();
 		myConnections = new HashMap<String, TCPSender>();
+		forwardedTasks = new HashMap<String, Boolean>();
+		crawlersComplete = new HashMap<String, Boolean>();
 		// Send only the www.root_url.com portion of URL for easier checking
 		// Checking for special case for Psych dept.
-		String rootUrl = crawlUrl.split("/")[2];
+		String rootUrl = myUrl.split("/")[2];
 		if(rootUrl.equals("www.colostate.edu"))
 			MYURL = "www.colostate.edu/Depts/Psychology";
 		else
@@ -93,11 +99,12 @@ public class Crawler implements Node{
 				 * 
 				 * Also need extra step for Psych dept.
 				 */
-				if(!(connectionRootUrl.equals(crawlUrl))){
+				if(!(connectionRootUrl.equals(myUrl))){
 					String cleanUrl = connectionRootUrl.split("/")[2];
 					if(cleanUrl.equals("www.colostate.edu"))
 						cleanUrl = "www.colostate.edu/Depts/Psychology";
 					connections.put(cleanUrl, connection);
+					crawlersComplete.put(cleanUrl, false);
 				}			
 
 			}catch(ArrayIndexOutOfBoundsException e){} // Catch out of bounds error to prevent program termination
@@ -123,10 +130,10 @@ public class Crawler implements Node{
 
 		// Setup connections to other Crawlers
 		//setupConnections();
-		
+
 		String type = "internal";
-		CrawlerTask t1 = new CrawlerTask(RECURSION_DEPTH, crawlUrl, crawlUrl, MYURL, myPool, type);
-		myPool.submit(t1);
+		CrawlerTask task1 = new CrawlerTask(RECURSION_DEPTH, myUrl, myUrl, MYURL, myPool, type);
+		myPool.submit(task1);
 	}
 
 	/**
@@ -214,10 +221,13 @@ public class Crawler implements Node{
 			receiveTaskFromCrawler(event);
 
 		case Protocol.CRAWLER_SENDS_TASK_COMPLETE:
-			break;
+			crawlerReceivesTaskComplete(event);
 
 		case Protocol.CRAWLER_SENDS_FINISHED:
-			break;
+			crawlerReceivesFinished(event);
+
+		case Protocol.CRAWLER_SENDS_INCOMPLETE:
+			crawlerReceivesIncomplete(event);
 
 		default:
 			System.out.println("Unrecognized event type sent.");
@@ -226,16 +236,89 @@ public class Crawler implements Node{
 	}
 
 	/**
+	 * Called when a Crawler resets its status
+	 * @param Event e
+	 */
+	private void crawlerReceivesIncomplete(Event e){
+		synchronized(connections){
+			CrawlerSendsIncomplete crawlerIncomplete = (CrawlerSendsIncomplete)e;
+			crawlersComplete.put(crawlerIncomplete.getOriginatingUrl(), false);
+		}
+	}
+
+	/**
+	 * Send incomplete status to all Crawlers
+	 */
+	private void crawlerSendsIncomplete(){
+		CrawlerSendsIncomplete crawlerSendsIncomplete = new CrawlerSendsIncomplete(Protocol.CRAWLER_SENDS_INCOMPLETE, MYURL);
+		sendToAll(crawlerSendsIncomplete.getBytes());
+	}
+
+	/**
+	 * Called when a Crawler has set its status to finished
+	 * @param Event e
+	 */
+	private void crawlerReceivesFinished(Event e){
+		synchronized(connections){
+			CrawlerSendsFinished crawlerFinished = (CrawlerSendsFinished)e;
+			crawlersComplete.put(crawlerFinished.getOriginatingUrl(), true);
+			crawlerSendsFinished();
+		}
+	}
+
+	/**
+	 * Send finished status to all Crawlers
+	 */
+	public void crawlerSendsFinished(){
+		if(completionCheck()){
+			CrawlerSendsFinished crawlerSendsFinished = new CrawlerSendsFinished(Protocol.CRAWLER_SENDS_FINISHED, MYURL);
+			sendToAll(crawlerSendsFinished.getBytes());
+		}
+	}
+
+	/**
+	 * Receive task complete notification from Crawler
+	 * @param Event e
+	 */
+	private void crawlerReceivesTaskComplete(Event e){
+		synchronized(connections){
+			CrawlerSendsTaskComplete taskComplete = (CrawlerSendsTaskComplete) e;
+			forwardedTasks.put(taskComplete.getOriginatingUrl(), true);
+			crawlerSendsFinished();
+		}
+	}
+
+	/**
+	 * Send completion Event to originating Crawler
+	 * @param String destUrl
+	 */
+	public void crawlerSendsTaskComplete(String destUrl){
+		Event crawlerSendsTaskComplete = ef.buildEvent(Protocol.CRAWLER_SENDS_TASK, destUrl);
+		synchronized(connections){
+			if (myConnections.containsKey(destUrl)) {
+				try {
+					myConnections.get(destUrl).sendData(crawlerSendsTaskComplete.getBytes());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			} else {
+				System.out.println("Unable to send notification to client. Not in connections list.");
+			}
+		}
+	}
+
+	/**
 	 * Receive task from other crawler
-	 * @param Event
+	 * @param Event e
 	 */
 	private void receiveTaskFromCrawler(Event e){
-		CrawlerSendsTask task = (CrawlerSendsTask) e;
+		// If receiving a new task, we're not finished, report it
+		crawlerSendsIncomplete();
+		// Create the new task and start it up
+		CrawlerSendsTask task = (CrawlerSendsTask)e;
 		String urlToCrawl = task.getUrlToCrawl();
 		String originatingUrl = task.getOriginatingCrawlerUrl();
 		String parentUrl = urlToCrawl;
-
-		//TODO need to keep track of originating URL so we can send confirmation when task complete
 
 		if(debug)
 			System.out.println("\n\n*************************\n Received task from crawler "+ originatingUrl+" \n*************************\n\n");
@@ -246,19 +329,23 @@ public class Crawler implements Node{
 
 	/**
 	 * Send URL to connected clients
-	 * @param String
+	 * @param String crawlUrl
 	 */
 	public void sendTaskToCrawler(String crawlUrl){
-		if(debug)
-			System.out.println("Attempting to send task to Crawler...");
-		Event CrawlerSendsTask = ef.buildEvent(cs455.wireformats.Protocol.CRAWLER_SENDS_TASK, crawlUrl + ";" + MYURL);
-		synchronized(myConnections){
+		Event crawlerSendsTask = ef.buildEvent(Protocol.CRAWLER_SENDS_TASK, crawlUrl + ";" + MYURL);
+		synchronized(connections){
 			try {
 				for (String key : myConnections.keySet()) {
 					if(crawlUrl.contains(key)){
 						if(debug)
 							System.out.println("Crawler found, sending task to Crawler" + key);
-						myConnections.get(key).sendData(CrawlerSendsTask.getBytes());
+						/*
+						 * Need to keep track of forwarded tasks.
+						 * Check to see if we've already added this Crawler, if not add it and
+						 * set the forwards boolean to false.
+						 */
+						forwardedTasks.put(key, false);
+						myConnections.get(key).sendData(crawlerSendsTask.getBytes());
 						break;
 					}
 				}
@@ -266,6 +353,44 @@ public class Crawler implements Node{
 				e.printStackTrace();
 			}
 		}
+	}
+
+	/**
+	 * Send message to all clients
+	 * @param bytes
+	 */
+	private void sendToAll(byte[] bytes){
+		synchronized(connections){
+			for (String key : myConnections.keySet()) {
+				try {
+					myConnections.get(key).sendData(bytes);
+				} catch (IOException e) {
+					System.out.println("Error sending data to Crawlers");
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+	/**
+	 * Check that all conditions for completion have been met
+	 * If ANY of the crawlers haven't reported complete, or
+	 * ANY of the tasks forwarded haven't reported finished, or
+	 * ANY of this Crawlers tasks aren't complete, then
+	 * return FALSE
+	 */
+	public boolean completionCheck(){
+		synchronized(connections){
+			if(crawlersComplete.containsValue(false))
+				return false;
+			if(forwardedTasks.containsValue(false))
+				return false;
+			if(!(myPool.isComplete()))
+				return false;
+		}
+		if(debug)
+			System.out.println("\n\n*************************\n CRAWLER COMPLETED ALL TASKS \n*************************\n\n");
+		return true;
 	}
 
 	/**

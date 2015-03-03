@@ -37,9 +37,9 @@ public class CrawlerThreadPool{
 	 * Main constructor for thread pool class
 	 * @param size
 	 */
-	public CrawlerThreadPool(int size, Crawler CRAWLER) {
+	public CrawlerThreadPool(int size, Crawler crawler) {
 		// Crawler associated with this pool
-		this.CRAWLER = CRAWLER;
+		CRAWLER = crawler;
 		// List of TASKS to be performed
 		TASKS = new LinkedList<CrawlerTask>();
 		// List of CRAWLER THREADS
@@ -74,7 +74,6 @@ public class CrawlerThreadPool{
 	 * report complete.
 	 */
 	public void checkCompletionStatus(){
-
 		Thread completionChecker = new Thread(new Runnable() {
 			public void run() {
 				try {
@@ -82,8 +81,7 @@ public class CrawlerThreadPool{
 					synchronized(TASK_LOCK){
 						if(TASKS.isEmpty() && !complete){
 							taskComplete();
-							if(debug)
-								System.out.println("\n\n*************************\n CRAWLER COMPLETED ALL TASKS \n*************************\n\n");
+							CRAWLER.crawlerSendsFinished();
 						}
 					}	
 				} catch (InterruptedException e) {
@@ -117,7 +115,7 @@ public class CrawlerThreadPool{
 	 * @return
 	 */
 	public boolean isComplete() {
-		return new Boolean(complete);
+		return complete ? true : false;
 	}
 
 	/**
@@ -135,6 +133,14 @@ public class CrawlerThreadPool{
 	public void resetComplete(){
 		complete = false;
 	}
+
+	/**
+	 * Forward crawl complete task to crawler
+	 * @param String
+	 */
+	public void sendTaskComplete(String originatingUrl){
+		CRAWLER.crawlerSendsTaskComplete(originatingUrl);
+	}	
 
 	/**
 	 * Forward crawl task to other CRAWLERs
