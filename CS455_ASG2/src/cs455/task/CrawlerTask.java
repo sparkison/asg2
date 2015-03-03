@@ -48,9 +48,6 @@ public class CrawlerTask implements Task {
 			CRAWLER_POOL.resetComplete();
 			// Crawl URL
 			URLExtractor(CRAWL_URL, newDepth);
-		}else{
-			// We've reached the recursion depth, mark task as complete
-			CRAWLER_POOL.taskComplete();
 		}
 	}
 
@@ -70,7 +67,7 @@ public class CrawlerTask implements Task {
 			for (Element aTag : aTags) {
 				if(aTag != null){
 					String pageLink = aTag.getAttributeValue("href").toString();
-					if(pageLink.contains(ROOT_URL)) {
+					if(pageLink.contains(ROOT_URL) || pageLink.charAt(0) == '/' || pageLink.charAt(0) == '.' || pageLink.charAt(0) == '#') {
 						// URL is a local URL, parse it
 						CrawlerTask task = new CrawlerTask(depth, pageLink, pageUrl, ROOT_URL, CRAWLER_POOL);
 						CRAWLER_POOL.submit(task);
@@ -109,7 +106,7 @@ public class CrawlerTask implements Task {
 	 * @return String absolute
 	 */
 	private String relativeToAbs(String parent, String relative){
-		String absolute = "";
+		String absolute = null;
 		try {
 			if(!new URI(relative).isAbsolute()){
 				URI resolvedUrl = new URI(parent).resolve(relative);

@@ -37,6 +37,7 @@ public class Crawler implements Node{
 	private Map<String, TCPSender> myConnections;
 	private CrawlerThreadPool myPool;
 	private EventFactory ef = EventFactory.getInstance();
+	private int taskCount = 0;
 	private boolean debug = false;
 
 	public static void main(String[] args) throws InterruptedException {
