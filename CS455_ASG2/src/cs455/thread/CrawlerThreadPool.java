@@ -135,18 +135,18 @@ public class CrawlerThreadPool{
 	}
 
 	/**
-	 * Forward crawl complete task to crawler
+	 * Forward crawl complete task to originating Crawler
 	 * @param String
 	 */
-	public void sendTaskComplete(String originatingUrl){
+	public void sendComplete(String originatingUrl){
 		CRAWLER.crawlerSendsTaskComplete(originatingUrl);
 	}	
 
 	/**
-	 * Forward crawl task to other CRAWLERs
+	 * Forward crawl task to other Crawler
 	 * @param String
 	 */
-	public void forward(CrawlerTask task, String forwards){
+	public void forwardTask(CrawlerTask task, String forwards){
 		CRAWLER.sendTaskToCrawler(forwards);
 	}
 
@@ -183,6 +183,15 @@ public class CrawlerThreadPool{
 					TASKS.add(task);
 					ADJACENCY.addEdge(task.getParentUrl(), task.getCrawlUrl());
 					crawled.add(task.getCrawlUrl());
+				} else {
+					/*
+					 * Already crawled
+					 * If originated from outside this Crawler, send
+					 * task complete message to originator
+					 */
+					if (!(task.getOriginator().equals("internal"))) {
+						sendComplete(task.getOriginator());
+					}
 				}
 			}
 			// If any THREADS waiting, notify task added to queue

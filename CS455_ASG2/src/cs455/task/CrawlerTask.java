@@ -27,17 +27,17 @@ public class CrawlerTask implements Task {
 	private final String PARENT_URL;
 	private final String CRAWL_URL;
 	private final String ROOT_URL;
-	private final String TYPE;
+	private final String ORIGINATOR;
 	private final CrawlerThreadPool CRAWLER_POOL;
 
-	public CrawlerTask(int recursionDepth, String crawlUrl, String parentUrl, String rootUrl, CrawlerThreadPool crawlerPool, String type){
+	public CrawlerTask(int recursionDepth, String crawlUrl, String parentUrl, String rootUrl, CrawlerThreadPool crawlerPool, String originator){
 		// Setting recursion depth to negative so we can increment up to 0
 		// to make things more intuitive
 		RECURSION_DEPTH = recursionDepth;
 		CRAWL_URL = relativeToAbs(parentUrl, crawlUrl);
 		PARENT_URL = parentUrl;
 		ROOT_URL = rootUrl;
-		TYPE = type;
+		ORIGINATOR = originator;
 		CRAWLER_POOL = crawlerPool;
 	}
 
@@ -71,12 +71,17 @@ public class CrawlerTask implements Task {
 						CRAWLER_POOL.submit(task);
 					} else {
 						// Need to forward it on...
-						CRAWLER_POOL.forward(this, pageLink);
+						CRAWLER_POOL.forwardTask(this, pageLink);
 					}
 				}				
 			}
-			if (!(TYPE.equals("internal"))) {
-				CRAWLER_POOL.sendTaskComplete(ROOT_URL);
+			/*
+			 * Type is set to "internal" if set by this Crawler
+			 * if this was a forwarded task, Type will be set to the
+			 * URL this task originated from
+			 */
+			if (!(ORIGINATOR.equals("internal"))) {
+				CRAWLER_POOL.sendComplete(ORIGINATOR);
 			}
 		} catch (IOException e) {} // in case of malformed url
 	}
@@ -137,6 +142,13 @@ public class CrawlerTask implements Task {
 	 */
 	public String getParentUrl() {
 		return new String(PARENT_URL);
+	}
+	
+	/**
+	 * @return the ORIGINATOR
+	 */
+	public String getOriginator() {
+		return new String(ORIGINATOR);
 	}
 
 	@Override

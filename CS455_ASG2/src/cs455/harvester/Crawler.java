@@ -61,11 +61,11 @@ public class Crawler implements Node{
 	}
 
 	/**
-	 * Crawler constructor
-	 * @param port
-	 * @param poolSize
-	 * @param rootUrl
-	 * @param configPath
+	 * Crawler constructor, constructs a Crawler Object
+	 * @param int port
+	 * @param int poolSize
+	 * @param String rootUrl
+	 * @param String configPath
 	 * @throws IOException 
 	 */
 	public Crawler(int port, int poolSize, String myUrl, String configPath) throws IOException{
@@ -131,8 +131,8 @@ public class Crawler implements Node{
 		// Setup connections to other Crawlers
 		setupConnections();
 
-		String type = "internal";
-		CrawlerTask task1 = new CrawlerTask(RECURSION_DEPTH, myUrl, myUrl, MYURL, myPool, type);
+		String originator = "internal";
+		CrawlerTask task1 = new CrawlerTask(RECURSION_DEPTH, myUrl, myUrl, MYURL, myPool, originator);
 		myPool.submit(task1);
 	}
 
@@ -177,7 +177,9 @@ public class Crawler implements Node{
 				Socket socket;
 				try {
 					socket = new Socket(connection[0], Integer.parseInt(connection[1]));
-					myConnections.put(rootUrl, new TCPSender(socket));
+					TCPSender sender = new TCPSender(socket);
+					sender.start();
+					myConnections.put(rootUrl, sender);
 				} catch (UnknownHostException e) {
 					success = false;
 					System.out.println("Error connecting to crawler "+ connection[0] +", unknown host error occurred: ");
@@ -230,7 +232,7 @@ public class Crawler implements Node{
 			crawlerReceivesIncomplete(event);
 
 		default:
-			System.out.println("Unrecognized event type sent.");
+			System.out.println("Unrecognized event type received.");
 
 		}
 	}
@@ -293,8 +295,8 @@ public class Crawler implements Node{
 	 * @param String destUrl
 	 */
 	public void crawlerSendsTaskComplete(String destUrl){
-		Event crawlerSendsTaskComplete = ef.buildEvent(Protocol.CRAWLER_SENDS_TASK_COMPLETE, MYURL);
 		synchronized(connections){
+			Event crawlerSendsTaskComplete = ef.buildEvent(Protocol.CRAWLER_SENDS_TASK_COMPLETE, MYURL);
 			if (myConnections.containsKey(destUrl)) {
 				try {
 					myConnections.get(destUrl).sendData(crawlerSendsTaskComplete.getBytes());
@@ -322,9 +324,10 @@ public class Crawler implements Node{
 			String parentUrl = urlToCrawl;
 
 			if(debug)
-				System.out.println("\n\n**************************************************\n "
-						+ "Received task from crawler ["+ originatingUrl+"] "
-						+ "\n**************************************************\n\n");
+				System.out.println("\n\n************************************************************\n"
+						+ " Received task from crawler ["+ originatingUrl+"]\n"
+						+ " Requested crawl of URL: [" + urlToCrawl + "]\n"
+						+ "************************************************************\n\n");
 
 			CrawlerTask newTask = new CrawlerTask(RECURSION_DEPTH, urlToCrawl, parentUrl, MYURL, myPool, originatingUrl);
 			myPool.submit(newTask);
@@ -336,15 +339,16 @@ public class Crawler implements Node{
 	 * @param String crawlUrl
 	 */
 	public void sendTaskToCrawler(String crawlUrl){
-		Event crawlerSendsTask = ef.buildEvent(Protocol.CRAWLER_SENDS_TASK, crawlUrl + ";" + MYURL);
 		synchronized(connections){
+			Event crawlerSendsTask = ef.buildEvent(Protocol.CRAWLER_SENDS_TASK, crawlUrl + ";" + MYURL);
 			try {
 				for (String key : myConnections.keySet()) {
 					if (crawlUrl.contains(key)) {
 						if(debug)
-							System.out.println("\n\n**************************************************\n"
-									+ "Sending task to Crawler " + key
-									+ "\n**************************************************\n\n");
+							System.out.println("\n\n************************************************************\n"
+									+ " Sending task to Crawler [" + key + "]\n"
+									+ " Requesting crawl of URL: [" + crawlUrl + "]\n"
+									+ "************************************************************\n\n");
 						/*
 						 * Need to keep track of forwarded tasks.
 						 * Check to see if we've already added this Crawler, if not add it and
