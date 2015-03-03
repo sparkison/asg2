@@ -128,7 +128,8 @@ public class Crawler implements Node{
 		}
 
 		// Setup connections to other Crawlers
-		setupConnections();
+		if(!(setupConnections()))
+			System.out.println("There were some errors setting up connections with other Crawlers");
 
 		String originator = "internal";
 		CrawlerTask task1 = new CrawlerTask(RECURSION_DEPTH, myUrl, myUrl, MYURL, myPool, originator);
