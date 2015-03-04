@@ -302,7 +302,7 @@ public class Crawler implements Node{
 		synchronized(connections){
 			CrawlerSendsTaskComplete taskComplete = (CrawlerSendsTaskComplete)e;
 			forwardedTasks.put(taskComplete.getOriginatingUrl(), true);
-			// Send finished message if done
+			// Send finished message, if done
 			crawlerSendsFinished();
 		}
 	}
@@ -314,16 +314,12 @@ public class Crawler implements Node{
 	public void crawlerSendsTaskComplete(String destUrl){
 		synchronized(connections){
 			Event crawlerSendsTaskComplete = ef.buildEvent(Protocol.CRAWLER_SENDS_TASK_COMPLETE, MYURL);
-			if (myConnections.containsKey(destUrl)) {
-				try {
-					myConnections.get(destUrl).sendData(crawlerSendsTaskComplete.getBytes());
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			} else {
-				System.out.println("Unable to send notification to client. Not in connections list.");
+			try {
+				myConnections.get(destUrl).sendData(crawlerSendsTaskComplete.getBytes());
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-			// Send finished message if done
+			// Send finished message, if done
 			crawlerSendsFinished();
 		}
 	}
@@ -454,11 +450,11 @@ public class Crawler implements Node{
 	public void printCompletionReport(){
 		synchronized(connections){
 			System.out.println("\n\n******************************\n");
-			System.out.println("Completion status of other Crawlers:\n");
+			System.out.println("Completion status of other Crawlers:");
 			for (String key : crawlersComplete.keySet()) {
 				System.out.println(key + " " + crawlersComplete.get(key));
 			}
-			System.out.println("\nForwarded tasks completion status:\n");
+			System.out.println("\nForwarded tasks completion status:");
 			for (String key : forwardedTasks.keySet()) {
 				System.out.println(key + " " + forwardedTasks.get(key));
 			}

@@ -69,30 +69,6 @@ public class CrawlerThreadPool{
 	}//END CrawlerThreadPool
 
 	/**
-	 * This thread will sleep for 5 seconds to allow other Threads
-	 * to continue polling the queue. If queue is still empty after 5 seconds
-	 * report complete.
-	 */
-	public void checkCompletionStatus(){
-		Thread completionChecker = new Thread(new Runnable() {
-			public void run() {
-				try {
-					Thread.sleep(5000);
-					synchronized(TASK_LOCK){
-						if(TASKS.isEmpty() && !complete){
-							taskComplete();
-							CRAWLER.crawlerSendsFinished();
-						}
-					}	
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		});  
-		completionChecker.start();
-	}
-
-	/**
 	 * Getters
 	 */
 	public int getThreadPoolSize() {
@@ -146,19 +122,21 @@ public class CrawlerThreadPool{
 	 * Forward crawl task to other Crawler
 	 * @param String
 	 */
-	public void forwardTask(CrawlerTask task, String forwards){
+	public void forwardTask(String forwards){
 		CRAWLER.sendTaskToCrawler(forwards);
 	}
 
 	/**
 	 * Remove item from head of LinkedList for processing
+	 * Check if queue is empty, if yes set
+	 * ThreadPool to complete
 	 * @return CrawlTask
 	 */
 	public CrawlerTask removeFromQueue() {
 		synchronized(TASK_LOCK){
 			CrawlerTask task = TASKS.poll();
 			if(TASKS.isEmpty())
-				checkCompletionStatus();
+				taskComplete();
 			else
 				resetComplete();
 			return task;

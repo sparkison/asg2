@@ -71,7 +71,7 @@ public class CrawlerTask implements Task {
 						CRAWLER_POOL.submit(task);
 					} else {
 						// Need to forward it on...
-						CRAWLER_POOL.forwardTask(this, pageLink);
+						CRAWLER_POOL.forwardTask(pageLink);
 					}
 				}				
 			}
