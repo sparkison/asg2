@@ -115,7 +115,7 @@ public class Crawler implements Node{
 		myPool = new CrawlerThreadPool(poolSize, this);
 
 		// Open ServerSocket to accept data from other Messaging Nodes
-		this.SERVER_SOCKET = new ServerSocket(port);
+		SERVER_SOCKET = new ServerSocket(port);
 		listen();
 
 		// Display success message
@@ -125,18 +125,29 @@ public class Crawler implements Node{
 			CommandParser parser = new CommandParser(this);
 			parser.start();
 		}
-			
-		// Need to sleep for 10 seconds before starting up
+
+		/*
+		 * Need to pause for 10 seconds before starting tasks
+		 */
 		try {
-			Thread.sleep(5000);	//TODO Need to change this to 10 seconds instead of 2
+			Thread.sleep(5000); //TODO need to change this to 10 seconds
 		} catch (InterruptedException e) {
 			System.err.println(e.getMessage());
 		}
-
+		
 		// Setup connections to other Crawlers
 		if(!(setupConnections()))
 			System.out.println("There were some errors setting up connections with other Crawlers");
 
+		/*
+		 * Need to pause for 10 seconds before starting tasks
+		 */
+		try {
+			Thread.sleep(5000); //TODO need to change this to 10 seconds
+		} catch (InterruptedException e) {
+			System.err.println(e.getMessage());
+		}
+		
 		String originator = "internal";
 		CrawlerTask task1 = new CrawlerTask(RECURSION_DEPTH, myUrl, myUrl, MYURL, myPool, originator);
 		myPool.submit(task1);
@@ -339,7 +350,8 @@ public class Crawler implements Node{
 			String parentUrl = urlToCrawl;
 
 			if(debug)
-				System.out.println("\n\n************************************************************\n"
+				System.out.println(""
+						+ "\n\n************************************************************\n"
 						+ " Received task from crawler ["+ originatingUrl+"]\n"
 						+ " Requested crawl of URL: [" + urlToCrawl + "]\n"
 						+ "************************************************************\n\n");
@@ -360,7 +372,8 @@ public class Crawler implements Node{
 				for (String key : myConnections.keySet()) {
 					if (crawlUrl.contains(key)) {
 						if(debug)
-							System.out.println("\n\n************************************************************\n"
+							System.out.println(""
+									+ "\n\n************************************************************\n"
 									+ " Sending task to Crawler [" + key + "]\n"
 									+ " Requesting crawl of URL: [" + crawlUrl + "]\n"
 									+ "************************************************************\n\n");
@@ -429,19 +442,21 @@ public class Crawler implements Node{
 	 * @return boolean status
 	 */
 	private boolean allCrawlerCompleted(){
-		if(!completionCheck())
-			return false;
-		if(crawlersComplete.containsValue(false))
-			return false;
-		
-		if(debug)
-			System.out.println("\n\n******************************\n CRAWLER COMPLETED ALL TASKS \n******************************\n\n");
-		/*
-		 * If here, everything has successfully completed!!
-		 * All my tasks are done, and all other Crawlers have reported
-		 * to me they're complete.
-		 */
-		return true;
+		synchronized(connections){
+			if(!completionCheck())
+				return false;
+			if(crawlersComplete.containsValue(false))
+				return false;
+			
+			if(debug)
+				System.out.println("\n\n******************************\n CRAWLER COMPLETED ALL TASKS \n******************************\n\n");
+			/*
+			 * If here, everything has successfully completed!!
+			 * All my tasks are done, and all other Crawlers have reported
+			 * to me they're complete.
+			 */
+			return true;
+		}
 	}
 
 	/**
