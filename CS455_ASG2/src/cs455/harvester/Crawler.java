@@ -312,7 +312,7 @@ public class Crawler implements Node{
 	private void crawlerReceivesTaskComplete(Event e){
 		synchronized(connections){
 			CrawlerSendsTaskComplete taskComplete = (CrawlerSendsTaskComplete)e;
-			forwardedTasks.put(taskComplete.getOriginatingUrl(), true);
+			forwardedTasks.put(taskComplete.getOriginatingUrl().trim(), true);
 			// Send finished message, if done
 			crawlerSendsFinished();
 		}
@@ -382,7 +382,7 @@ public class Crawler implements Node{
 						 * Check to see if we've already added this Crawler, if not add it and
 						 * set the forwards boolean to false.
 						 */
-						forwardedTasks.put(key, false);
+						forwardedTasks.put(key.trim(), false);
 						myConnections.get(key).sendData(crawlerSendsTask.getBytes());
 						break;
 					}
