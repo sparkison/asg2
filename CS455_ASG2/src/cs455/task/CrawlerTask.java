@@ -49,6 +49,7 @@ public class CrawlerTask implements Task {
 			// Crawl URL
 			URLExtractor(CRAWL_URL, newDepth);
 		}
+		
 		/*
 		 * Type is set to "internal" if set by this Crawler
 		 * if this was a forwarded task, Type will be set to the
