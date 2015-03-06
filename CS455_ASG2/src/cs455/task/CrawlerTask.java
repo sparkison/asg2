@@ -49,6 +49,14 @@ public class CrawlerTask implements Task {
 			// Crawl URL
 			URLExtractor(CRAWL_URL, newDepth);
 		}
+		/*
+		 * Type is set to "internal" if set by this Crawler
+		 * if this was a forwarded task, Type will be set to the
+		 * URL this task originated from
+		 */
+		if (!(ORIGINATOR.equals("internal"))) {
+			CRAWLER_POOL.sendComplete(ORIGINATOR);
+		}
 	}
 
 	public void URLExtractor(String url, int depth){
@@ -75,14 +83,7 @@ public class CrawlerTask implements Task {
 					}
 				}				
 			}
-			/*
-			 * Type is set to "internal" if set by this Crawler
-			 * if this was a forwarded task, Type will be set to the
-			 * URL this task originated from
-			 */
-			if (!(ORIGINATOR.equals("internal"))) {
-				CRAWLER_POOL.sendComplete(ORIGINATOR);
-			}
+			
 		} catch (IOException e) {} // in case of malformed url
 	}
 
