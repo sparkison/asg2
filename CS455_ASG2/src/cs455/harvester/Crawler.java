@@ -453,16 +453,16 @@ public class Crawler implements Node{
 			 * 
 			 * Need to do another check after I sent completion.
 			 */
-			if(myPool.isComplete() && !(receivedTasks.containsValue(false))){
-				if(forwardedTasks.containsValue(false)){
-					for(String key : forwardedTasks.keySet()){
-						if(forwardedTasks.get(key) == false){
-							crawlerSendsTaskComplete(key);
-							forwardedTasks.put(key, true);
-						}
-					}
-				}
-			}
+//			if(myPool.isComplete() && !(receivedTasks.containsValue(false))){
+//				if(forwardedTasks.containsValue(false)){
+//					for(String key : forwardedTasks.keySet()){
+//						if(forwardedTasks.get(key) == false){
+//							crawlerSendsTaskComplete(key);
+//							forwardedTasks.put(key, true);
+//						}
+//					}
+//				}
+//			}
 			if(forwardedTasks.containsValue(false))
 				return false;
 			if(!(myPool.isComplete()))
