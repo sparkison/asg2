@@ -40,6 +40,7 @@ public class Crawler implements Node{
 	private Map<String, String[]> connections;
 	private Map<String, TCPSender> myConnections;
 	private Map<String, Boolean> forwardedTasks;
+	private Map<String, Boolean> receivedTasks;
 	private Map<String, Boolean> crawlersComplete;
 	private CrawlerThreadPool myPool;
 	private EventFactory ef = EventFactory.getInstance();
@@ -75,6 +76,7 @@ public class Crawler implements Node{
 		myConnections = new HashMap<String, TCPSender>();
 		forwardedTasks = new HashMap<String, Boolean>();
 		crawlersComplete = new HashMap<String, Boolean>();
+		receivedTasks = new HashMap<String, Boolean>();
 		// Send only the www.root_url.com portion of URL for easier checking
 		// Checking for special case for Psych dept.
 		String rootUrl = myUrl.split("/")[2];
@@ -134,7 +136,7 @@ public class Crawler implements Node{
 		} catch (InterruptedException e) {
 			System.err.println(e.getMessage());
 		}
-		
+
 		// Setup connections to other Crawlers
 		if(!(setupConnections()))
 			System.out.println("There were some errors setting up connections with other Crawlers");
@@ -147,10 +149,11 @@ public class Crawler implements Node{
 		} catch (InterruptedException e) {
 			System.err.println(e.getMessage());
 		}
-		
+
 		String originator = "internal";
 		CrawlerTask task1 = new CrawlerTask(RECURSION_DEPTH, myUrl, myUrl, MYURL, myPool, originator);
 		myPool.submit(task1);
+		heartBeat();
 	}
 
 	/**
@@ -176,6 +179,22 @@ public class Crawler implements Node{
 						}							
 					} catch (IOException e) {}
 				}
+			}
+		});  
+		listener.start();
+	}
+
+	public void heartBeat(){
+		Thread listener = new Thread(new Runnable() {
+			public void run() {
+				while(!completionCheck()){
+					try {
+						Thread.sleep(2000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+				allCrawlerCompleted();
 			}
 		});  
 		listener.start();
@@ -331,6 +350,7 @@ public class Crawler implements Node{
 				e.printStackTrace();
 			}
 			// Send finished message, if done
+			receivedTasks.put(destUrl, true);
 			crawlerSendsFinished();
 		}
 	}
@@ -357,6 +377,11 @@ public class Crawler implements Node{
 						+ "************************************************************\n\n");
 
 			CrawlerTask newTask = new CrawlerTask(RECURSION_DEPTH, urlToCrawl, parentUrl, MYURL, myPool, originatingUrl);
+
+			if(receivedTasks.containsKey(parentUrl)){
+				receivedTasks.put(parentUrl, false);
+			}
+
 			myPool.submit(newTask);
 		}
 	}
@@ -428,6 +453,16 @@ public class Crawler implements Node{
 			 * 
 			 * Need to do another check after I sent completion.
 			 */
+			if(myPool.isComplete() && !(receivedTasks.containsValue(false))){
+				if(forwardedTasks.containsValue(false)){
+					for(String key : forwardedTasks.keySet()){
+						if(forwardedTasks.get(key) == false){
+							crawlerSendsTaskComplete(key);
+							forwardedTasks.put(key, true);
+						}
+					}
+				}
+			}
 			if(forwardedTasks.containsValue(false))
 				return false;
 			if(!(myPool.isComplete()))
@@ -435,7 +470,7 @@ public class Crawler implements Node{
 		}
 		return true;
 	}
-	
+
 	/**
 	 * This is the final check. If the above conditions hold,
 	 * and all Crawlers report finished, then harvesting is complete.
@@ -447,7 +482,7 @@ public class Crawler implements Node{
 				return false;
 			if(crawlersComplete.containsValue(false))
 				return false;
-			
+
 			if(debug)
 				System.out.println("\n\n******************************\n CRAWLER COMPLETED ALL TASKS \n******************************\n\n");
 			/*
@@ -477,7 +512,7 @@ public class Crawler implements Node{
 			System.out.println("\n******************************\n\n");
 		}
 	}
-	
+
 	/**
 	 * Helper method to determine which Crawler this is
 	 */
