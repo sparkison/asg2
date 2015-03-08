@@ -6,23 +6,46 @@
 
 package cs455.util;
 
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class AdjacencyList {
-	
+
+	private final String DIRECTORY_ROOT = "/tmp/cs455-shaunpa/";
 	private final Map<String, List<String>> ADJACENCY;
+	private final Set<String> BROKEN_LINKS;
 	private final String ROOT_URL;
-	
+
 	public AdjacencyList(String rootUrl){
 		ADJACENCY = new HashMap<String, List<String>>();
+		BROKEN_LINKS = new HashSet<String>();
 		ROOT_URL = rootUrl;
+		// Create the initial directory for the Crawler associated with this list
+		File file = new File(DIRECTORY_ROOT + rootUrl.replaceAll("[^a-zA-Z0-9._-]", "-") + "/nodes");
+		if (!file.exists()) {
+			if (file.mkdirs()) {
+				//System.out.println("Directory is created!");
+			} else {
+				//System.out.println("Failed to create directory!");
+			}
+		}
 	}
 	
+	/**
+	 * Initiates the creation of the directory structure for this Crawler
+	 */
+	public void startDirectoryCreation(){
+		System.out.println("Creating directory for Crawler: " + ROOT_URL + "...");
+		//TODO make some files and folders for the Crawler!!
+	}
+
 	/**
 	 * Adds an edge to the vertex. If vertex not present, it will be added.
 	 * Vertex would be the parent URL, edge would be the crawl URL (which is the outgoing link)
@@ -38,7 +61,7 @@ public class AdjacencyList {
 			ADJACENCY.get(vertex).add(edge);
 		}
 	}
-	
+
 	/**
 	 * If valid vertex, returns List<String> of edges
 	 * else, returns null if vertex not found
@@ -52,7 +75,7 @@ public class AdjacencyList {
 		}
 		return edgeList;
 	}
-	
+
 	/**
 	 * Returns list of incoming links to given vertex,
 	 * returns empty List if no incoming edges found
@@ -62,13 +85,22 @@ public class AdjacencyList {
 	public List<String> inEdges(String vertex){
 		List<String> edgeList = new ArrayList<String>();
 		for (String key : ADJACENCY.keySet()) {
-		    int index = ADJACENCY.get(key).indexOf(vertex);
-		    if(index != -1)
-		    	edgeList.add(ADJACENCY.get(key).get(index));
+			int index = ADJACENCY.get(key).indexOf(vertex);
+			if(index != -1)
+				edgeList.add(ADJACENCY.get(key).get(index));
 		}
 		return edgeList;
 	}
 	
+	/**
+	 * A list of broken links.
+	 * Does not allow duplicates.
+	 * @param url
+	 */
+	public void addBrokenLink(String url){
+		BROKEN_LINKS.add(url);
+	}
+
 	/**
 	 * Returns a formatted string for creating directory
 	 * @param String directoryUrl
@@ -87,5 +119,5 @@ public class AdjacencyList {
 		}
 		return directoryName;
 	}
-	
+
 }//END AdjacencyList

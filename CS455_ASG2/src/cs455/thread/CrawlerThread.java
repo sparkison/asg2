@@ -34,8 +34,12 @@ public class CrawlerThread extends Thread{
 			task = pool.removeFromQueue();
 			if(task != null) {
 				try {
-					// System.out.println("Thread " + Thread.currentThread().getName() + " starting task!");
-					task.start();
+					try {
+						task.start();
+					} finally {
+						if (!(task.getOriginator().equals("internal")))
+							pool.sendComplete(task.getOriginator());
+					}
 					// "Niceness", sleep for 1 second after each task completion
 					Thread.sleep(1000);
 				} catch (Exception e) {

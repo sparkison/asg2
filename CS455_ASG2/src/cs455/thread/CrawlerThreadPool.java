@@ -6,7 +6,6 @@
 
 package cs455.thread;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -22,7 +21,6 @@ public class CrawlerThreadPool{
 	private volatile boolean shutDown;
 	private volatile boolean complete;
 
-	private final String DIRECTORY_ROOT = "/tmp/cs455-shaunpa/";
 	private final LinkedList<CrawlerThread> THREADS;
 	private final LinkedList<CrawlerTask> TASKS;
 	private final AdjacencyList ADJACENCY;
@@ -54,16 +52,6 @@ public class CrawlerThreadPool{
 			CrawlerThread crawlThread = new CrawlerThread(this);
 			THREADS.add(crawlThread);
 			crawlThread.start();
-		}
-
-		// Create the root folder for this Crawler
-		File file = new File(DIRECTORY_ROOT + CRAWLER.getRootUrl().replaceAll("[^a-zA-Z0-9._-]", "-") + "/nodes");
-		if (!file.exists()) {
-			if (file.mkdirs()) {
-				//System.out.println("Directory is created!");
-			} else {
-				//System.out.println("Failed to create directory!");
-			}
 		}
 
 	}//END CrawlerThreadPool
@@ -127,6 +115,22 @@ public class CrawlerThreadPool{
 	}
 
 	/**
+	 * Calls on the AdjacencyList to create the
+	 * directory structure associated with this Crawler
+	 */
+	public void createDirectory(){
+		ADJACENCY.startDirectoryCreation();
+	}
+
+	/**
+	 * Adds broken link to adjacency list Object
+	 * @param url
+	 */
+	public void reportBrokenLink(String url){
+		ADJACENCY.addBrokenLink(url);
+	}
+
+	/**
 	 * Remove item from head of LinkedList for processing
 	 * Check if queue is empty, if yes set
 	 * ThreadPool to complete
@@ -156,10 +160,10 @@ public class CrawlerThreadPool{
 					resetComplete();
 					// Mark as crawled to prevent duplicate crawling
 					crawled.add(task.getCrawlUrl());
-					
+
 					if(debug)
 						System.out.println("Task added: " + task);
-					
+
 					// Add the task, and add it to our adjacency list
 					TASKS.add(task);
 					ADJACENCY.addEdge(task.getParentUrl(), task.getCrawlUrl());

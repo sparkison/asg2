@@ -49,15 +49,6 @@ public class CrawlerTask implements Task {
 			// Crawl URL
 			URLExtractor(CRAWL_URL, newDepth);
 		}
-		
-		/*
-		 * Type is set to "internal" if set by this Crawler
-		 * if this was a forwarded task, Type will be set to the
-		 * URL this task originated from
-		 */
-		if (!(ORIGINATOR.equals("internal"))) {
-			CRAWLER_POOL.sendComplete(ORIGINATOR);
-		}
 	}
 
 	public void URLExtractor(String url, int depth){
@@ -84,8 +75,20 @@ public class CrawlerTask implements Task {
 					}
 				}				
 			}
-			
-		} catch (IOException e) {} // in case of malformed url
+
+		} catch (IOException e) {
+			/*
+			 * If here, could be malformed URL, or 404 or 500 error.
+			 * Need to check, and if 404 or 500 add to broken-links
+			 */
+			try {
+				if(checkIfDeadLink(url)){
+					CRAWLER_POOL.reportBrokenLink(url);
+				}
+			} catch (IOException e1) {}
+			// System.out.println("Error in crawler task: ");
+			// System.err.println(e.getMessage());
+		}
 	}
 
 	/**
@@ -94,7 +97,7 @@ public class CrawlerTask implements Task {
 	 * @return
 	 * @throws IOException
 	 */
-	public String resolveRedirects(String url) throws IOException {
+	private String resolveRedirects(String url) throws IOException {
 		HttpURLConnection con = (HttpURLConnection)(new URL(url).openConnection());
 		con.setInstanceFollowRedirects(false);
 		con.connect();
@@ -104,6 +107,25 @@ public class CrawlerTask implements Task {
 		} else {
 			return url;
 		}
+	}
+
+	/**
+	 * Determines if link is dead or not.
+	 * @param url
+	 * @return
+	 * @throws IOException
+	 */
+	private boolean checkIfDeadLink(String url) throws IOException {
+		HttpURLConnection con = (HttpURLConnection)(new URL(url).openConnection());
+		con.setInstanceFollowRedirects(false);
+		con.connect();
+		int responseCode = con.getResponseCode();
+		if(responseCode == 404){
+			return true;
+		} if(responseCode == 500){
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -145,7 +167,7 @@ public class CrawlerTask implements Task {
 	public String getParentUrl() {
 		return new String(PARENT_URL);
 	}
-	
+
 	/**
 	 * @return the ORIGINATOR
 	 */

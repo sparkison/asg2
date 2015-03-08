@@ -39,12 +39,12 @@ public class Crawler implements Node{
 
 	private Map<String, String[]> connections;
 	private Map<String, TCPSender> myConnections;
-	private Map<String, Boolean> forwardedTasks;
-	private Map<String, Boolean> receivedTasks;
+	private Map<String, Integer> forwardTaskCount;
+	private Map<String, Integer> receiveTaskCount;
 	private Map<String, Boolean> crawlersComplete;
 	private CrawlerThreadPool myPool;
 	private EventFactory ef = EventFactory.getInstance();
-	private boolean debug = true;
+	private boolean debug = false;
 
 	public static void main(String[] args) throws InterruptedException {
 		if(args.length < 3){
@@ -74,10 +74,13 @@ public class Crawler implements Node{
 		// Initialize our containers for other Crawler connections
 		connections = new HashMap<String, String[]>();
 		myConnections = new HashMap<String, TCPSender>();
-		forwardedTasks = new HashMap<String, Boolean>();
+
+		// Record keepers
+		forwardTaskCount = new HashMap<String, Integer>();
+		receiveTaskCount = new HashMap<String, Integer>();
 		crawlersComplete = new HashMap<String, Boolean>();
-		receivedTasks = new HashMap<String, Boolean>();
-		// Send only the www.root_url.com portion of URL for easier checking
+
+		// Store only the www.root_url.com portion of URL for easier checking
 		// Checking for special case for Psych dept.
 		String rootUrl = myUrl.split("/")[2];
 		if(rootUrl.equals("www.colostate.edu"))
@@ -87,7 +90,6 @@ public class Crawler implements Node{
 
 		// Path to configuration file
 		Path path = Paths.get(configPath);
-		@SuppressWarnings("resource")
 		Scanner scanner = new Scanner(path);
 		while (scanner.hasNextLine()){
 			try{
@@ -112,27 +114,24 @@ public class Crawler implements Node{
 			}catch(ArrayIndexOutOfBoundsException e){} // Catch out of bounds error to prevent program termination
 
 		}
-
+		scanner.close();
+		
 		// Instantiate the ThreadPool
 		myPool = new CrawlerThreadPool(poolSize, this);
 
 		// Open ServerSocket to accept data from other Messaging Nodes
 		SERVER_SOCKET = new ServerSocket(port);
-		listen();
+		listen();		
 
-		// Display success message
-		System.out.println("Crawler listening for connections on port: " + port);
-
-		if(debug){
-			CommandParser parser = new CommandParser(this);
-			parser.start();
-		}
+		// Used for debugging
+		CommandParser parser = new CommandParser(this);
+		parser.start();
 
 		/*
 		 * Need to pause for 10 seconds before starting tasks
 		 */
 		try {
-			Thread.sleep(5000); //TODO need to change this to 10 seconds
+			Thread.sleep(10000);
 		} catch (InterruptedException e) {
 			System.err.println(e.getMessage());
 		}
@@ -140,20 +139,13 @@ public class Crawler implements Node{
 		// Setup connections to other Crawlers
 		if(!(setupConnections()))
 			System.out.println("There were some errors setting up connections with other Crawlers");
-
-		/*
-		 * Need to pause for 10 seconds before starting tasks
-		 */
-		try {
-			Thread.sleep(5000); //TODO need to change this to 10 seconds
-		} catch (InterruptedException e) {
-			System.err.println(e.getMessage());
+		else{
+			// Wait for connection setup to return before starting task
+			String originator = "internal";
+			CrawlerTask task1 = new CrawlerTask(RECURSION_DEPTH, myUrl, myUrl, MYURL, myPool, originator);
+			myPool.submit(task1);	
+			heartBeat();
 		}
-
-		String originator = "internal";
-		CrawlerTask task1 = new CrawlerTask(RECURSION_DEPTH, myUrl, myUrl, MYURL, myPool, originator);
-		myPool.submit(task1);
-		heartBeat();
 	}
 
 	/**
@@ -180,24 +172,45 @@ public class Crawler implements Node{
 					} catch (IOException e) {}
 				}
 			}
-		});  
+		});
 		listener.start();
+
+		// Display success message
+		System.out.println("Crawler listening for connections on port: " + SERVER_SOCKET.getLocalPort());
 	}
 
+	/**
+	 * This method runs a "heartbeat" to determine
+	 * when all tasks are complete.
+	 * It waits for this Crawlers task to complete,
+	 * then checks to see of all other Crawlers have
+	 * reported finished.
+	 */
 	public void heartBeat(){
-		Thread listener = new Thread(new Runnable() {
+		Thread heartBeat = new Thread(new Runnable() {
 			public void run() {
-				while(!completionCheck()){
+				while(!allCrawlerCompleted()){
 					try {
-						Thread.sleep(2000);
+						Thread.sleep(5000);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
 				}
-				allCrawlerCompleted();
 			}
 		});  
-		listener.start();
+		/*
+		 * Wait a few of seconds to start heartbeat
+		 * This allows time for tasks to start
+		 * since the task queue will be empty initially
+		 * need to give it time to queue up some tasks
+		 */
+		try {
+			Thread.sleep(10000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		// Start listening
+		heartBeat.start();
 	}
 
 	/**
@@ -214,7 +227,7 @@ public class Crawler implements Node{
 				try {
 					socket = new Socket(connection[0], Integer.parseInt(connection[1]));
 					TCPSender sender = new TCPSender(socket);
-					sender.start();
+					// sender.start();
 					/*
 					 * If here, setup successful, add connection to connections list,
 					 * and set completion tracker list to false for this entry
@@ -231,7 +244,7 @@ public class Crawler implements Node{
 					System.err.println(e.getMessage());
 				}
 			}
-		}		
+		}
 		return success;
 	}
 
@@ -309,19 +322,15 @@ public class Crawler implements Node{
 		synchronized(connections){
 			CrawlerSendsFinished crawlerFinished = (CrawlerSendsFinished)e;
 			crawlersComplete.put(crawlerFinished.getOriginatingUrl(), true);
-			// Send finished message if done
-			allCrawlerCompleted();
 		}
 	}
 
 	/**
 	 * Send finished status to all Crawlers
 	 */
-	public void crawlerSendsFinished(){
-		if(completionCheck()){
-			Event crawlerSendsFinished = ef.buildEvent(Protocol.CRAWLER_SENDS_FINISHED, MYURL);
-			sendToAll(crawlerSendsFinished.getBytes());
-		}
+	private void crawlerSendsFinished(){
+		Event crawlerSendsFinished = ef.buildEvent(Protocol.CRAWLER_SENDS_FINISHED, MYURL);
+		sendToAll(crawlerSendsFinished.getBytes());
 	}
 
 	/**
@@ -331,9 +340,18 @@ public class Crawler implements Node{
 	private void crawlerReceivesTaskComplete(Event e){
 		synchronized(connections){
 			CrawlerSendsTaskComplete taskComplete = (CrawlerSendsTaskComplete)e;
-			forwardedTasks.put(taskComplete.getOriginatingUrl().trim(), true);
-			// Send finished message, if done
-			crawlerSendsFinished();
+			/*
+			 * Received finished task from Crawler, change status
+			 * in forwarded task to true so we know it's completed
+			 */
+			String originator = taskComplete.getOriginatingUrl();
+			Integer count = receiveTaskCount.get(originator);
+			if (count == null) {
+				receiveTaskCount.put(originator, 1);
+			}
+			else {
+				receiveTaskCount.put(originator, count + 1);
+			}
 		}
 	}
 
@@ -349,9 +367,6 @@ public class Crawler implements Node{
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			// Send finished message, if done
-			receivedTasks.put(destUrl, true);
-			crawlerSendsFinished();
 		}
 	}
 
@@ -377,11 +392,6 @@ public class Crawler implements Node{
 						+ "************************************************************\n\n");
 
 			CrawlerTask newTask = new CrawlerTask(RECURSION_DEPTH, urlToCrawl, parentUrl, MYURL, myPool, originatingUrl);
-
-			if(receivedTasks.containsKey(parentUrl)){
-				receivedTasks.put(parentUrl, false);
-			}
-
 			myPool.submit(newTask);
 		}
 	}
@@ -395,7 +405,7 @@ public class Crawler implements Node{
 			Event crawlerSendsTask = ef.buildEvent(Protocol.CRAWLER_SENDS_TASK, crawlUrl + ";" + MYURL);
 			try {
 				for (String key : myConnections.keySet()) {
-					if (crawlUrl.contains(key)) {
+					if (crawlUrl.toLowerCase().contains(key.toLowerCase())) {
 						if(debug)
 							System.out.println(""
 									+ "\n\n************************************************************\n"
@@ -404,17 +414,22 @@ public class Crawler implements Node{
 									+ "************************************************************\n\n");
 						/*
 						 * Need to keep track of forwarded tasks.
-						 * Check to see if we've already added this Crawler, if not add it and
-						 * set the forwards boolean to false.
+						 * Place dest. URL in forwarded tasks, with status false
 						 */
-						forwardedTasks.put(key.trim(), false);
+						Integer count = forwardTaskCount.get(key);
+						if (count == null) {
+							forwardTaskCount.put(key, 1);
+						}
+						else {
+							forwardTaskCount.put(key, count + 1);
+						}
 						myConnections.get(key).sendData(crawlerSendsTask.getBytes());
 						break;
 					}
 				}
 			} catch (IOException e) {
 				// e.printStackTrace();
-				System.out.println("Connection to Crawler lost, removing from list...");
+				System.out.println("Connection to Crawler lost, unable to send task to Crawler.");
 			}
 		}
 	}
@@ -453,20 +468,15 @@ public class Crawler implements Node{
 			 * 
 			 * Need to do another check after I sent completion.
 			 */
-//			if(myPool.isComplete() && !(receivedTasks.containsValue(false))){
-//				if(forwardedTasks.containsValue(false)){
-//					for(String key : forwardedTasks.keySet()){
-//						if(forwardedTasks.get(key) == false){
-//							crawlerSendsTaskComplete(key);
-//							forwardedTasks.put(key, true);
-//						}
-//					}
-//				}
-//			}
-			if(forwardedTasks.containsValue(false))
-				return false;
+			for (String key : forwardTaskCount.keySet()) {
+				if(!(forwardTaskCount.get(key).equals(receiveTaskCount.get(key))))
+					return false;
+			}
 			if(!(myPool.isComplete()))
 				return false;
+
+			// Send finished message if done with all tasks
+			crawlerSendsFinished();
 		}
 		return true;
 	}
@@ -489,7 +499,11 @@ public class Crawler implements Node{
 			 * If here, everything has successfully completed!!
 			 * All my tasks are done, and all other Crawlers have reported
 			 * to me they're complete.
+			 * 
+			 * create the directory structure for this Crawler
 			 */
+			myPool.createDirectory();
+			
 			return true;
 		}
 	}
@@ -504,9 +518,14 @@ public class Crawler implements Node{
 			for (String key : crawlersComplete.keySet()) {
 				System.out.println(key + " " + crawlersComplete.get(key));
 			}
-			System.out.println("\nForwarded tasks completion status:");
-			for (String key : forwardedTasks.keySet()) {
-				System.out.println(key + " " + forwardedTasks.get(key));
+			System.out.println("\nForwarded tasks count:");
+			for (String key : forwardTaskCount.keySet()) {
+				System.out.println(key + " " + forwardTaskCount.get(key));
+			}
+			System.out.println("\nForwarded tasks completion count:");
+			for (String key : receiveTaskCount.keySet()) {
+				boolean complete = receiveTaskCount.get(key).equals(forwardTaskCount.get(key));
+				System.out.println(key + " " + receiveTaskCount.get(key) + " (" + complete + ")");
 			}
 			System.out.println("\nThreadPool status: " + myPool.isComplete());
 			System.out.println("\n******************************\n\n");

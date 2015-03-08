@@ -20,10 +20,14 @@ public class TCPSender extends Thread {
 	}
 
 	public void sendData(byte[] dataToSend) throws IOException {
-		queue.add(dataToSend);
-		synchronized(WAIT_LOCK){
-			WAIT_LOCK.notify();
-		}
+		int dataLength = dataToSend.length;
+		dout.writeInt(dataLength);
+		dout.write(dataToSend, 0, dataLength);
+		dout.flush();
+		//		queue.add(dataToSend);
+		//		synchronized(WAIT_LOCK){
+		//			WAIT_LOCK.notify();
+		//		}
 	}
 
 	public void run() {
