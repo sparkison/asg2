@@ -35,7 +35,8 @@ public class Crawler implements Node{
 	// Instance variables **************
 	private final int RECURSION_DEPTH = 5;
 	private final ServerSocket SERVER_SOCKET;
-	private final String MYURL;
+	private final String MY_URL;
+	private final String FULL_URL;
 
 	private Map<String, String[]> connections;
 	private Map<String, TCPSender> myConnections;
@@ -47,6 +48,9 @@ public class Crawler implements Node{
 	private boolean debug = false;
 
 	public static void main(String[] args) throws InterruptedException {
+		
+		Crawler crawler = null;
+		
 		if(args.length < 3){
 			System.out.println("Incorrect format used to initate Crawler\nPlease use: cs455.harvester.Crawler [portNum] [poolSize] [rootUrl] [configPath]");
 		}else{
@@ -55,10 +59,41 @@ public class Crawler implements Node{
 			String rootUrl = args[2];
 			String configPath = args[3];
 			try {
-				new Crawler(port, poolSize, rootUrl, configPath);
+				// Initialize the Crawler
+				crawler = new Crawler(port, poolSize, rootUrl, configPath);
 			} catch (IOException e) {
 				System.err.println(e.getMessage());
+				System.exit(-1);
 			}
+			
+			// Start listening for connections
+			crawler.listen();		
+
+			// Used for debugging and determining state of Crawler
+			CommandParser parser = new CommandParser(crawler);
+			parser.start();
+
+			/*
+			 * Need to pause for 10 seconds before starting tasks
+			 */
+			try {
+				Thread.sleep(10000);
+			} catch (InterruptedException e) {
+				System.err.println(e.getMessage());
+			}
+
+			// Setup connections to other Crawlers, then start initial task
+			if(!(crawler.setupConnections()))
+				System.out.println("There were some errors setting up connections with other Crawlers");
+			else{
+				/*
+				 * Start task, and initiate heartbeat
+				 * Heartbeat used to determine if all Crawlers complete or not
+				 */
+				crawler.startTask();
+				crawler.heartBeat();
+			}
+			
 		}		
 	}
 
@@ -82,11 +117,12 @@ public class Crawler implements Node{
 
 		// Store only the www.root_url.com portion of URL for easier checking
 		// Checking for special case for Psych dept.
+		FULL_URL = myUrl;
 		String rootUrl = myUrl.split("/")[2];
 		if(rootUrl.equals("www.colostate.edu"))
-			MYURL = "www.colostate.edu/Depts/Psychology";
+			MY_URL = "www.colostate.edu/Depts/Psychology";
 		else
-			MYURL = rootUrl;
+			MY_URL = rootUrl;
 
 		// Path to configuration file
 		Path path = Paths.get(configPath);
@@ -121,31 +157,18 @@ public class Crawler implements Node{
 
 		// Open ServerSocket to accept data from other Messaging Nodes
 		SERVER_SOCKET = new ServerSocket(port);
-		listen();		
-
-		// Used for debugging
-		CommandParser parser = new CommandParser(this);
-		parser.start();
-
+	}
+	
+	/**
+	 * Start initial crawl task
+	 */
+	public void startTask(){
 		/*
-		 * Need to pause for 10 seconds before starting tasks
+		 * Crawler task format is: Recursion depth, URL to crawl, parent URL, MyURL, ThreaPool, originator 
+		 * (if not internal, then originator is URL of Crawler that sent the task, otherwise default of "internal")
 		 */
-		try {
-			Thread.sleep(10000);
-		} catch (InterruptedException e) {
-			System.err.println(e.getMessage());
-		}
-
-		// Setup connections to other Crawlers
-		if(!(setupConnections()))
-			System.out.println("There were some errors setting up connections with other Crawlers");
-		else{
-			// Wait for connection setup to return before starting task
-			String originator = "internal";
-			CrawlerTask task1 = new CrawlerTask(RECURSION_DEPTH, myUrl, myUrl, MYURL, myPool, originator);
-			myPool.submit(task1);	
-			heartBeat();
-		}
+		String originator = "internal";
+		myPool.submit(new CrawlerTask(RECURSION_DEPTH, FULL_URL, FULL_URL, MY_URL, myPool, originator));	
 	}
 
 	/**
@@ -262,7 +285,7 @@ public class Crawler implements Node{
 	 * @return String
 	 */
 	public String getRootUrl(){
-		return new String(MYURL);
+		return new String(MY_URL);
 	}
 
 	/**
@@ -310,7 +333,7 @@ public class Crawler implements Node{
 	 * Send incomplete status to all Crawlers
 	 */
 	private void crawlerSendsIncomplete(){
-		Event crawlerSendsIncomplete = ef.buildEvent(Protocol.CRAWLER_SENDS_INCOMPLETE, MYURL);
+		Event crawlerSendsIncomplete = ef.buildEvent(Protocol.CRAWLER_SENDS_INCOMPLETE, MY_URL);
 		sendToAll(crawlerSendsIncomplete.getBytes());
 	}
 
@@ -329,7 +352,7 @@ public class Crawler implements Node{
 	 * Send finished status to all Crawlers
 	 */
 	private void crawlerSendsFinished(){
-		Event crawlerSendsFinished = ef.buildEvent(Protocol.CRAWLER_SENDS_FINISHED, MYURL);
+		Event crawlerSendsFinished = ef.buildEvent(Protocol.CRAWLER_SENDS_FINISHED, MY_URL);
 		sendToAll(crawlerSendsFinished.getBytes());
 	}
 
@@ -361,7 +384,7 @@ public class Crawler implements Node{
 	 */
 	public void crawlerSendsTaskComplete(String destUrl){
 		synchronized(connections){
-			Event crawlerSendsTaskComplete = ef.buildEvent(Protocol.CRAWLER_SENDS_TASK_COMPLETE, MYURL);
+			Event crawlerSendsTaskComplete = ef.buildEvent(Protocol.CRAWLER_SENDS_TASK_COMPLETE, MY_URL);
 			try {
 				myConnections.get(destUrl).sendData(crawlerSendsTaskComplete.getBytes());
 			} catch (IOException e) {
@@ -391,7 +414,7 @@ public class Crawler implements Node{
 						+ " Requested crawl of URL: [" + urlToCrawl + "]\n"
 						+ "************************************************************\n\n");
 
-			CrawlerTask newTask = new CrawlerTask(RECURSION_DEPTH, urlToCrawl, parentUrl, MYURL, myPool, originatingUrl);
+			CrawlerTask newTask = new CrawlerTask(RECURSION_DEPTH, urlToCrawl, parentUrl, MY_URL, myPool, originatingUrl);
 			myPool.submit(newTask);
 		}
 	}
@@ -402,7 +425,7 @@ public class Crawler implements Node{
 	 */
 	public void sendTaskToCrawler(String crawlUrl){
 		synchronized(connections){
-			Event crawlerSendsTask = ef.buildEvent(Protocol.CRAWLER_SENDS_TASK, crawlUrl + ";" + MYURL);
+			Event crawlerSendsTask = ef.buildEvent(Protocol.CRAWLER_SENDS_TASK, crawlUrl + ";" + MY_URL);
 			try {
 				for (String key : myConnections.keySet()) {
 					if (crawlUrl.toLowerCase().contains(key.toLowerCase())) {
@@ -537,7 +560,7 @@ public class Crawler implements Node{
 	 */
 	public void whoAmI(){
 		System.out.println("\n\n******************************\n");
-		System.out.println(" I am Crawler: " + MYURL);
+		System.out.println(" I am Crawler: " + MY_URL);
 		System.out.println("\n******************************\n\n");
 	}
 
