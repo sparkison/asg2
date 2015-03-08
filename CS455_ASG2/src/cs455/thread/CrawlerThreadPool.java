@@ -43,7 +43,7 @@ public class CrawlerThreadPool{
 		// List of CRAWLER THREADS
 		THREADS = new LinkedList<CrawlerThread>();
 		// Create our ADJACENCY list to build out the graph
-		ADJACENCY = new AdjacencyList(CRAWLER.getRootUrl());
+		ADJACENCY = new AdjacencyList(CRAWLER.getRootUrl(), CRAWLER);
 		// Volatile boolean for shut down
 		shutDown = false;
 

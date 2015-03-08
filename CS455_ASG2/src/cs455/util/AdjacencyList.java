@@ -16,17 +16,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import cs455.harvester.Crawler;
+
 public class AdjacencyList {
 
 	private final String DIRECTORY_ROOT = "/tmp/cs455-shaunpa/";
 	private final Map<String, List<String>> ADJACENCY;
 	private final Set<String> BROKEN_LINKS;
 	private final String ROOT_URL;
+	private final Crawler CRAWLER;
 
-	public AdjacencyList(String rootUrl){
+	public AdjacencyList(String rootUrl, Crawler crawler){
 		ADJACENCY = new HashMap<String, List<String>>();
 		BROKEN_LINKS = new HashSet<String>();
 		ROOT_URL = rootUrl;
+		CRAWLER = crawler;
 		// Create the initial directory for the Crawler associated with this list
 		File file = new File(DIRECTORY_ROOT + rootUrl.replaceAll("[^a-zA-Z0-9._-]", "-") + "/nodes");
 		if (!file.exists()) {
@@ -43,7 +47,13 @@ public class AdjacencyList {
 	 */
 	public void startDirectoryCreation(){
 		System.out.println("Creating directory for Crawler: " + ROOT_URL + "...");
+		
 		//TODO make some files and folders for the Crawler!!
+		
+		
+		
+		// All done, shut it down...
+		CRAWLER.stop();
 	}
 
 	/**
