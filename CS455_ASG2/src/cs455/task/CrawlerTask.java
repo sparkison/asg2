@@ -59,21 +59,24 @@ public class CrawlerTask implements Task {
 			final String pageUrl = resolveRedirects(url);
 			Source source = new Source(new URL(pageUrl));
 
-			// get all 'a' tags
-			List<Element> aTags = source.getAllElements(HTMLElementName.A);
+			// Don't parse if document, only if page			
+			if(!(pageUrl.endsWith(".pdf") || pageUrl.endsWith(".doc"))){
+				// get all 'a' tags
+				List<Element> aTags = source.getAllElements(HTMLElementName.A);
 
-			// get the URL ("href" attribute) in each 'a' tag
-			for (Element aTag : aTags) {
-				if (aTag != null){
-					String pageLink = aTag.getAttributeValue("href").toString();
-					if (pageLink.contains(ROOT_URL) || pageLink.charAt(0) == '/' || pageLink.charAt(0) == '.' || pageLink.charAt(0) == '#') {
-						CrawlerTask task = new CrawlerTask(depth, pageLink, pageUrl, ROOT_URL, CRAWLER_POOL, "internal");
-						CRAWLER_POOL.submit(task);
-					} else {
-						// Need to forward it on...
-						CRAWLER_POOL.forwardTask(pageLink);
-					}
-				}				
+				// get the URL ("href" attribute) in each 'a' tag
+				for (Element aTag : aTags) {
+					if (aTag != null){
+						String pageLink = aTag.getAttributeValue("href").toString();
+						if (pageLink.contains(ROOT_URL) || pageLink.charAt(0) == '/' || pageLink.charAt(0) == '.' || pageLink.charAt(0) == '#') {
+							CrawlerTask task = new CrawlerTask(depth, pageLink, pageUrl, ROOT_URL, CRAWLER_POOL, "internal");
+							CRAWLER_POOL.submit(task);
+						} else {
+							// Need to forward it on...
+							CRAWLER_POOL.forwardTask(pageLink);
+						}
+					}				
+				}
 			}
 
 		} catch (IOException e) {
