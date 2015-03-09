@@ -585,6 +585,8 @@ public class Crawler implements Node{
 			System.exit(0);
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
+		}finally{
+			System.exit(-1);
 		}
 	}
 
