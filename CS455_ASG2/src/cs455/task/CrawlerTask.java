@@ -89,8 +89,6 @@ public class CrawlerTask implements Task {
 					CRAWLER_POOL.reportBrokenLink(url);
 				}
 			} catch (IOException e1) {}
-			// System.out.println("Error in crawler task: ");
-			// System.err.println(e.getMessage());
 		}
 	}
 
@@ -125,7 +123,8 @@ public class CrawlerTask implements Task {
 		int responseCode = con.getResponseCode();
 		if(responseCode == 404){
 			return true;
-		} if(responseCode == 500){
+		} 
+		if(responseCode == 500){
 			return true;
 		}
 		return false;

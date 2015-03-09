@@ -24,10 +24,10 @@ public class TCPSender extends Thread {
 		dout.writeInt(dataLength);
 		dout.write(dataToSend, 0, dataLength);
 		dout.flush();
-		//		queue.add(dataToSend);
-		//		synchronized(WAIT_LOCK){
-		//			WAIT_LOCK.notify();
-		//		}
+//		queue.add(dataToSend);
+//		synchronized(WAIT_LOCK){
+//			WAIT_LOCK.notify();
+//		}
 	}
 
 	public void run() {

@@ -24,14 +24,14 @@ public class AdjacencyList {
 
 	private final String DIRECTORY_ROOT = "/tmp/cs455-shaunpa/";
 	private final String NODE_ROOT;
-	private final Map<String, List<String>> ADJACENCY;
+	private final Map<String, Set<String>> ADJACENCY;
 	private final Set<String> BROKEN_LINKS;
 	private final String ROOT_URL;
 	private final Crawler CRAWLER;
 	private final File FILE;
 
 	public AdjacencyList(String rootUrl, Crawler crawler){
-		ADJACENCY = new HashMap<String, List<String>>();
+		ADJACENCY = new HashMap<String, Set<String>>();
 		BROKEN_LINKS = new HashSet<String>();
 		ROOT_URL = rootUrl;
 		CRAWLER = crawler;
@@ -61,12 +61,12 @@ public class AdjacencyList {
 					/*
 					 * Build upper level folder for the vertex
 					 */
-
 					String nodeFolder = getDirectoryName(vertex);
-
 					if(nodeFolder.equals(""))
 						nodeFolder = ROOT_URL.replaceAll("[^a-zA-Z0-9._-]", "-");
-					
+					else if(nodeFolder.charAt(0) == '-')
+						nodeFolder = nodeFolder.substring(1);
+
 					File file = new File(nodePath + "/" + nodeFolder);
 					if (!file.exists()) {
 						file.mkdirs();
@@ -113,19 +113,18 @@ public class AdjacencyList {
 		/*
 		 * Write the broken links file
 		 */
-		if(BROKEN_LINKS.size() > 0){
-			File brokenLinks = new File(NODE_ROOT + "/broken-links");
-			try {
-				PrintWriter brokenLink = new PrintWriter(brokenLinks);
-				for(String broken : BROKEN_LINKS){
-					brokenLink.println(broken);
-				}
-				brokenLink.flush();
-				brokenLink.close();
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
+		File brokenLinks = new File(NODE_ROOT + "/broken-links");
+		try {
+			PrintWriter brokenLink = new PrintWriter(brokenLinks);
+			for(String broken : BROKEN_LINKS){
+				brokenLink.println(broken);
 			}
+			brokenLink.flush();
+			brokenLink.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
 		}
+
 		// All done, shut it down...
 		CRAWLER.stop();
 	}
@@ -138,7 +137,7 @@ public class AdjacencyList {
 	 */
 	public void addEdge(String vertex, String edge){
 		if(!(ADJACENCY.containsKey(vertex))){
-			List<String> edgeList = new ArrayList<String>();
+			Set<String> edgeList = new HashSet<String>();
 			edgeList.add(edge);
 			ADJACENCY.put(vertex, edgeList);
 		}else{
@@ -169,8 +168,7 @@ public class AdjacencyList {
 	public List<String> inEdges(String vertex){
 		List<String> edgeList = new ArrayList<String>();
 		for (String key : ADJACENCY.keySet()) {
-			int index = ADJACENCY.get(key).indexOf(vertex);
-			if(index != -1)
+			if(ADJACENCY.get(key).contains(vertex))
 				edgeList.add(key);
 		}
 		return edgeList;

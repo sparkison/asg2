@@ -166,7 +166,6 @@ public class CrawlerThreadPool{
 
 					// Add the task, and add it to our adjacency list
 					TASKS.add(task);
-					ADJACENCY.addEdge(task.getParentUrl(), task.getCrawlUrl());
 				} else {
 					/*
 					 * Already crawled
@@ -177,6 +176,12 @@ public class CrawlerThreadPool{
 						sendComplete(task.getOriginator());
 					}
 				}
+				
+				if (!(task.getOriginator().equals("internal")))
+					ADJACENCY.addEdge(task.getOriginator(), task.getCrawlUrl());
+				else
+					ADJACENCY.addEdge(task.getParentUrl(), task.getCrawlUrl());
+				
 			}
 			// If any THREADS waiting, notify task added to queue
 			synchronized(WAIT_LOCK){
