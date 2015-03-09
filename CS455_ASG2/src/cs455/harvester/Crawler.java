@@ -37,6 +37,7 @@ public class Crawler implements Node{
 	private final ServerSocket SERVER_SOCKET;
 	private final String MY_URL;
 	private final String FULL_URL;
+	private final long startTime = System.nanoTime();
 
 	private Map<String, String[]> connections;
 	private Map<String, TCPSender> myConnections;
@@ -45,7 +46,10 @@ public class Crawler implements Node{
 	private Map<String, Boolean> crawlersComplete;
 	private CrawlerThreadPool myPool;
 	private EventFactory ef = EventFactory.getInstance();
+	// Used for debug print statements
 	private boolean debug = false;
+	// Used to determine program runtime
+	private boolean timer = true;
 
 	public static void main(String[] args) throws InterruptedException {
 		
@@ -525,6 +529,13 @@ public class Crawler implements Node{
 			 * 
 			 * create the directory structure for this Crawler
 			 */
+			
+			if(timer){
+				long endTime = System.nanoTime();
+				long duration = (endTime - startTime)/1000000000; // duration in seconds
+				System.out.println("\n\n******************************\n CRAWLER COMPLETED IN "+duration/60+"mins / "+duration%60+"secs \n******************************\n\n");
+			}
+			
 			myPool.createDirectory();
 			
 			return true;

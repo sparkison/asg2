@@ -73,7 +73,7 @@ public class CrawlerTask implements Task {
 							CRAWLER_POOL.submit(task);
 						} else {
 							// Need to forward it on...
-							CRAWLER_POOL.forwardTask(pageLink);
+							CRAWLER_POOL.forwardTask(pageLink, this);
 						}
 					}				
 				}
@@ -121,12 +121,10 @@ public class CrawlerTask implements Task {
 		con.setInstanceFollowRedirects(false);
 		con.connect();
 		int responseCode = con.getResponseCode();
-		if(responseCode == 404){
+		if(responseCode == 404)
 			return true;
-		} 
-		if(responseCode == 500){
+		if(responseCode == 500)
 			return true;
-		}
 		return false;
 	}
 

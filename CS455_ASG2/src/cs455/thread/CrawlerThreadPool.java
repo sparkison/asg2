@@ -99,7 +99,7 @@ public class CrawlerThreadPool{
 	}
 
 	/**
-	 * Forward crawl complete task to originating Crawler
+	 * Send crawl complete task to originating Crawler
 	 * @param String
 	 */
 	public void sendComplete(String originatingUrl){
@@ -108,10 +108,17 @@ public class CrawlerThreadPool{
 
 	/**
 	 * Forward crawl task to other Crawler
+	 * Add edge to our graph
 	 * @param String
 	 */
-	public void forwardTask(String forwards){
-		CRAWLER.sendTaskToCrawler(forwards);
+	public void forwardTask(String forwards, CrawlerTask task){
+		try{
+			CRAWLER.sendTaskToCrawler(forwards);
+		}finally{
+			synchronized(TASK_LOCK){
+				ADJACENCY.addEdge(task.getParentUrl(), forwards);
+			}
+		}
 	}
 
 	/**
@@ -119,7 +126,9 @@ public class CrawlerThreadPool{
 	 * directory structure associated with this Crawler
 	 */
 	public void createDirectory(){
-		ADJACENCY.startDirectoryCreation();
+		synchronized(TASK_LOCK){
+			ADJACENCY.startDirectoryCreation();
+		}
 	}
 
 	/**
@@ -127,7 +136,9 @@ public class CrawlerThreadPool{
 	 * @param url
 	 */
 	public void reportBrokenLink(String url){
-		ADJACENCY.addBrokenLink(url);
+		synchronized(TASK_LOCK){
+			ADJACENCY.addBrokenLink(url);
+		}
 	}
 
 	/**
@@ -155,33 +166,34 @@ public class CrawlerThreadPool{
 		if(!shutDown) {
 			// Add task to queue, if we haven't already crawled it
 			synchronized(TASK_LOCK){
-				if(!(crawled.contains(task.getCrawlUrl()))){
-					// Reset completion status, if previously set to complete
-					resetComplete();
-					// Mark as crawled to prevent duplicate crawling
-					crawled.add(task.getCrawlUrl());
+				try{
+					if(!(crawled.contains(task.getCrawlUrl()))){
+						// Reset completion status, if previously set to complete
+						resetComplete();
+						// Mark as crawled to prevent duplicate crawling
+						crawled.add(task.getCrawlUrl());
 
-					if(debug)
-						System.out.println("Task added: " + task);
+						if(debug)
+							System.out.println("Task added: " + task);
 
-					// Add the task, and add it to our adjacency list
-					TASKS.add(task);
-				} else {
-					/*
-					 * Already crawled
-					 * If originated from outside this Crawler, send
-					 * task complete message to originator
-					 */
-					if (!(task.getOriginator().equals("internal"))) {
-						sendComplete(task.getOriginator());
+						// Add the task, and add it to our adjacency list
+						TASKS.add(task);
+					} else {
+						/*
+						 * Already crawled
+						 * If originated from outside this Crawler, send
+						 * task complete message to originator
+						 */
+						if (!(task.getOriginator().equals("internal"))) {
+							sendComplete(task.getOriginator());
+						}
 					}
+				}finally{
+					if (!(task.getOriginator().equals("internal")))
+						ADJACENCY.addEdge(task.getOriginator(), task.getCrawlUrl());
+					else
+						ADJACENCY.addEdge(task.getParentUrl(), task.getCrawlUrl());
 				}
-				
-				if (!(task.getOriginator().equals("internal")))
-					ADJACENCY.addEdge(task.getOriginator(), task.getCrawlUrl());
-				else
-					ADJACENCY.addEdge(task.getParentUrl(), task.getCrawlUrl());
-				
 			}
 			// If any THREADS waiting, notify task added to queue
 			synchronized(WAIT_LOCK){
