@@ -533,7 +533,7 @@ public class Crawler implements Node{
 			if(timer){
 				long endTime = System.nanoTime();
 				long duration = (endTime - startTime)/1000000000; // duration in seconds
-				System.out.println("\n\n******************************\n CRAWLER COMPLETED IN "+duration/60+"mins / "+duration%60+"secs \n******************************\n\n");
+				System.out.println("\n\n*******************************************\n CRAWLER COMPLETED IN "+duration/60+"mins / "+duration%60+"secs \n*******************************************\n\n");
 			}
 			
 			myPool.createDirectory();
