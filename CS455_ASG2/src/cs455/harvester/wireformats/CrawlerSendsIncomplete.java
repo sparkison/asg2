@@ -1,4 +1,4 @@
-package cs455.wireformats;
+package cs455.harvester.wireformats;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;

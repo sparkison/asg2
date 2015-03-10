@@ -4,15 +4,15 @@
  * CS455 - Dist. Systems
  */
 
-package cs455.thread;
+package cs455.harvester.thread;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import cs455.harvester.Crawler;
-import cs455.task.CrawlerTask;
-import cs455.util.AdjacencyList;
+import cs455.harvester.task.CrawlerTask;
+import cs455.harvester.util.AdjacencyList;
 
 
 public class CrawlerThreadPool{
@@ -20,6 +20,8 @@ public class CrawlerThreadPool{
 	// Instance variables **************
 	private volatile boolean shutDown;
 	private volatile boolean complete;
+	private volatile int tasksAdded = 0;
+	private volatile int tasksCompleted = 0;
 
 	private final LinkedList<CrawlerThread> THREADS;
 	private final LinkedList<CrawlerTask> TASKS;
@@ -79,7 +81,14 @@ public class CrawlerThreadPool{
 	 * @return
 	 */
 	public boolean isComplete() {
-		return complete ? true : false;
+		return (complete && tasksAdded == tasksCompleted) ? true : false;
+	}
+	
+	/**
+	 * Used to increment completed task count
+	 */
+	public void threadCompletedTask(){
+		tasksCompleted++;
 	}
 
 	/**
@@ -99,12 +108,12 @@ public class CrawlerThreadPool{
 	}
 
 	/**
-	 * Send crawl complete task to originating Crawler
-	 * @param String
+	 * Send task complete message or originating URL
+	 * @param destUrl
 	 */
 	public void sendComplete(String originatingUrl){
 		CRAWLER.crawlerSendsTaskComplete(originatingUrl);
-	}	
+	}
 
 	/**
 	 * Forward crawl task to other Crawler
@@ -150,6 +159,10 @@ public class CrawlerThreadPool{
 	public CrawlerTask removeFromQueue() {
 		synchronized(TASK_LOCK){
 			CrawlerTask task = TASKS.poll();
+
+			if(debug && task != null)
+				System.out.println("Starting crawl of task: " + task);
+
 			if(TASKS.isEmpty())
 				taskComplete();
 			else
@@ -170,13 +183,15 @@ public class CrawlerThreadPool{
 					if(!(crawled.contains(task.getCrawlUrl()))){
 						// Reset completion status, if previously set to complete
 						resetComplete();
+						// Increment added task count
+						tasksAdded++;
 						// Mark as crawled to prevent duplicate crawling
 						crawled.add(task.getCrawlUrl());
 
 						if(debug)
 							System.out.println("Task added: " + task);
 
-						// Add the task, and add it to our adjacency list
+						// Add the task
 						TASKS.add(task);
 					} else {
 						/*
@@ -208,21 +223,25 @@ public class CrawlerThreadPool{
 	 * Stop all THREADS, and shutdown
 	 */
 	public void stop() {
-		// Call shutdown on all THREADS in pool
-		for(CrawlerThread crawlThread : THREADS) {
-			crawlThread.shutdown();
-		}
-		// Notify all THREADS still waiting on lock to finish
-		synchronized (this.WAIT_LOCK) {
-			WAIT_LOCK.notifyAll();
-		}
-		// Finally, wait for all THREADS to complete TASKS
-		for(CrawlerThread crawlThread : THREADS) {
-			try {
-				crawlThread.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+		try{
+			// Call shutdown on all THREADS in pool
+			for(CrawlerThread crawlThread : THREADS) {
+				crawlThread.shutdown();
 			}
+			// Notify all THREADS still waiting on lock to finish
+			synchronized (this.WAIT_LOCK) {
+				WAIT_LOCK.notifyAll();
+			}
+			// Finally, wait for all THREADS to complete TASKS
+			for(CrawlerThread crawlThread : THREADS) {
+				try {
+					crawlThread.join();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}finally{
+			System.exit(0);
 		}
 	}
 

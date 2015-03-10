@@ -4,7 +4,7 @@
  * CS455 - Dist. Systems
  */
 
-package cs455.task;
+package cs455.harvester.task;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -18,7 +18,7 @@ import net.htmlparser.jericho.Element;
 import net.htmlparser.jericho.HTMLElementName;
 import net.htmlparser.jericho.LoggerProvider;
 import net.htmlparser.jericho.Source;
-import cs455.thread.CrawlerThreadPool;
+import cs455.harvester.thread.CrawlerThreadPool;
 
 public class CrawlerTask implements Task {
 
@@ -82,10 +82,10 @@ public class CrawlerTask implements Task {
 		} catch (IOException e) {
 			/*
 			 * If here, could be malformed URL, or 404 or 500 error.
-			 * Need to check, and if 404 or 500 add to broken-links
+			 * Need to check, and if 403, 404 or 500 add to broken-links
 			 */
 			try {
-				if(checkIfDeadLink(url)){
+				if(checkDeadLink(url)){
 					CRAWLER_POOL.reportBrokenLink(url);
 				}
 			} catch (IOException e1) {}
@@ -116,7 +116,7 @@ public class CrawlerTask implements Task {
 	 * @return
 	 * @throws IOException
 	 */
-	private boolean checkIfDeadLink(String url) throws IOException {
+	private boolean checkDeadLink(String url) throws IOException {
 		HttpURLConnection con = (HttpURLConnection)(new URL(url).openConnection());
 		con.setInstanceFollowRedirects(false);
 		con.connect();

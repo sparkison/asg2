@@ -16,18 +16,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
-import cs455.task.CrawlerTask;
-import cs455.thread.CrawlerThreadPool;
-import cs455.transport.TCPReceiverThread;
-import cs455.transport.TCPSender;
-import cs455.util.CommandParser;
-import cs455.wireformats.CrawlerSendsFinished;
-import cs455.wireformats.CrawlerSendsIncomplete;
-import cs455.wireformats.CrawlerSendsTask;
-import cs455.wireformats.CrawlerSendsTaskComplete;
-import cs455.wireformats.Event;
-import cs455.wireformats.EventFactory;
-import cs455.wireformats.Protocol;
+import cs455.harvester.task.CrawlerTask;
+import cs455.harvester.thread.CrawlerThreadPool;
+import cs455.harvester.transport.TCPReceiverThread;
+import cs455.harvester.transport.TCPSender;
+import cs455.harvester.util.CommandParser;
+import cs455.harvester.wireformats.CrawlerSendsFinished;
+import cs455.harvester.wireformats.CrawlerSendsIncomplete;
+import cs455.harvester.wireformats.CrawlerSendsTask;
+import cs455.harvester.wireformats.CrawlerSendsTaskComplete;
+import cs455.harvester.wireformats.Event;
+import cs455.harvester.wireformats.EventFactory;
+import cs455.harvester.wireformats.Protocol;
 
 
 public class Crawler implements Node{
@@ -81,7 +81,7 @@ public class Crawler implements Node{
 			 * Need to pause for 10 seconds before starting tasks
 			 */
 			try {
-				Thread.sleep(10000);
+				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				System.err.println(e.getMessage());
 			}
@@ -97,7 +97,7 @@ public class Crawler implements Node{
 				crawler.startTask();
 				crawler.heartBeat();
 			}
-			
+			crawler.heartBeat();			
 		}		
 	}
 
@@ -227,7 +227,7 @@ public class Crawler implements Node{
 			}
 		});  
 		/*
-		 * Wait a few of seconds to start heartbeat
+		 * Wait a few seconds to start heartbeat
 		 * This allows time for tasks to start
 		 * since the task queue will be empty initially
 		 * need to give it time to queue up some tasks
@@ -574,6 +574,13 @@ public class Crawler implements Node{
 		System.out.println("\n\n******************************\n");
 		System.out.println(" I am Crawler: " + MY_URL);
 		System.out.println("\n******************************\n\n");
+	}
+	
+	/**
+	 * Helper method to manually build out directory
+	 */
+	public void buildDirectory(){
+		myPool.createDirectory();
 	}
 
 	/**

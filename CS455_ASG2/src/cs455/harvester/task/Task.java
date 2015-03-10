@@ -1,4 +1,4 @@
-package cs455.task;
+package cs455.harvester.task;
 
 public interface Task {
 

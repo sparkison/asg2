@@ -4,7 +4,7 @@
  * CS455 - Dist. Systems
  */
 
-package cs455.util;
+package cs455.harvester.util;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -30,6 +30,7 @@ public class AdjacencyList {
 	private final String ROOT_URL;
 	private final Crawler CRAWLER;
 	private final File FILE;
+	private final String PATTERN;
 	private final boolean debug = true;
 
 	public AdjacencyList(String rootUrl, Crawler crawler){
@@ -38,15 +39,8 @@ public class AdjacencyList {
 		ROOT_URL = rootUrl;
 		CRAWLER = crawler;
 		NODE_ROOT = DIRECTORY_ROOT + rootUrl.replaceAll("[^a-zA-Z0-9._-]", "-");
-		// Create the initial directory for the Crawler associated with this list
+		PATTERN = "(?i).*"+ rootUrl.trim() +".*";
 		FILE = new File(NODE_ROOT + "/nodes");
-		if (!FILE.exists()) {
-			if (FILE.mkdirs()) {
-				//System.out.println("Directory is created!");
-			} else {
-				//System.out.println("Failed to create directory!");
-			}
-		}
 	}
 
 	/**
@@ -56,9 +50,18 @@ public class AdjacencyList {
 		if(debug)
 			System.out.println("Creating directory for Crawler: " + ROOT_URL + "...");
 
+		// Create the initial directory for the Crawler associated with this list
+		if (!FILE.exists()) {
+			if (FILE.mkdirs()) {
+				//System.out.println("Directory is created!");
+			} else {
+				//System.out.println("Failed to create directory!");
+			}
+		}
+
 		String nodePath = FILE.getAbsolutePath();
 		for(String vertex : ADJACENCY.keySet()){
-			if(vertex.contains(ROOT_URL)){
+			if(vertex.matches(PATTERN)){
 				try {
 
 					/*
@@ -173,12 +176,26 @@ public class AdjacencyList {
 
 				String vertex = bfsQueue.pop();
 
-				ArrayList<String> neighbors = new ArrayList<String>(ADJACENCY.get(vertex));
+				List<String> neighbors = null;
+				try{
+					neighbors = new ArrayList<String>(ADJACENCY.get(vertex));
+				}catch(NullPointerException e){}
+
 				if(neighbors != null){
 					for(String neighbor : neighbors){
-						if(neighbor != null){
+						if(!(neighbor == null || 
+								neighbor.endsWith(".pdf") || 
+								neighbor.endsWith(".doc") ||
+								neighbor.endsWith(".png") ||
+								neighbor.endsWith(".jpg") ||
+								neighbor.endsWith(".jpeg")||
+								neighbor.endsWith(".tif") ||
+								neighbor.endsWith(".svg") ||
+								!neighbor.startsWith("http"))){
 							// If neighbor not visited...
 							if(!(visited.contains(neighbor))){
+								// Mark it as visited
+								visited.add(neighbor);
 								// Add it to our disjoint graphs container
 								disjointGraphs.get(index).add(neighbor);
 								// Add it to our queue to be visited
@@ -203,17 +220,22 @@ public class AdjacencyList {
 		 * Loop through our disjoint graph Map container and add graph file, with links, as needed...
 		 */
 		for(Integer disjointCount : disjointGraphs.keySet()){
-			File file = new File(disjointSubGraphs.getAbsolutePath() + "/graph" + disjointCount);
-			try {
-				PrintWriter disjointGraph = new PrintWriter(file);
-				for(String graphEdge : disjointGraphs.get(disjointCount)){
-					disjointGraph.println(graphEdge);
+
+			int graphFileCount = 1;
+			if(!(disjointGraphs.get(disjointCount).isEmpty())){
+				File file = new File(disjointSubGraphs.getAbsolutePath() + "/graph" + graphFileCount);
+				graphFileCount++;
+				try {
+					PrintWriter disjointGraph = new PrintWriter(file);
+					for(String graphEdge : disjointGraphs.get(disjointCount)){
+						disjointGraph.println(graphEdge);
+					}
+					disjointGraph.flush();
+					disjointGraph.close();
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
 				}
-				disjointGraph.flush();
-				disjointGraph.close();
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			}
+			}			
 		}
 
 	}
@@ -283,12 +305,13 @@ public class AdjacencyList {
 		String directoryName = url.getPath();
 		String[] temp = directoryName.split("/");
 		directoryName = "";
-		for(int i = 1; i<temp.length; i++){
+		for(int i = 0; i<temp.length; i++){
 			directoryName += temp[i].replaceAll("[^a-zA-Z0-9._-]", "-");
 			if(i != temp.length-1)
 				directoryName += "-";
 		}
-		return directoryName;
+		System.out.println("Directory name: " + directoryName.trim());
+		return directoryName.trim();
 	}
 
 }//END AdjacencyList

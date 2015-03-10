@@ -1,4 +1,4 @@
-package cs455.transport;
+package cs455.harvester.transport;
 
 import java.io.IOException;
 import java.net.Socket;

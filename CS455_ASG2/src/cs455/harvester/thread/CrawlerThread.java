@@ -4,9 +4,9 @@
  * CS455 - Dist. Systems
  */
 
-package cs455.thread;
+package cs455.harvester.thread;
 
-import cs455.task.CrawlerTask;
+import cs455.harvester.task.CrawlerTask;
 
 
 public class CrawlerThread extends Thread{
@@ -39,6 +39,8 @@ public class CrawlerThread extends Thread{
 					} finally {
 						if (!(task.getOriginator().equals("internal")))
 							pool.sendComplete(task.getOriginator());
+						// Notify ThreadPool we've completed our task
+						pool.threadCompletedTask();
 					}
 					// "Niceness", sleep for 1 second after each task completion
 					Thread.sleep(1000);
@@ -71,9 +73,9 @@ public class CrawlerThread extends Thread{
 	void shutdown() {
 		// Set active to false, then interrupt the thread to ensure it dies
 		try{
-			this.interrupt();
-		}finally{
 			active = false;
+		}finally{
+			this.interrupt();
 		}
 	}
 

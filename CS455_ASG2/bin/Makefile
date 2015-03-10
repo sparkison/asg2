@@ -3,7 +3,8 @@ all: compile
 clean:
 	@echo -e '[INFO] Cleaning Up..'
 	@-rm -rf cs455/**/*.class
+	@-rm -rf cs455/**/**/*.class
 
 compile: 
 	@echo -e '[INFO] Compiling the Source..'
-	@javac -d . -cp *.jar cs455/**/*.java
+	@javac -d . -cp ./lib/jericho-html-3.3.jar:. cs455/**/*.java cs455/**/**/*.java

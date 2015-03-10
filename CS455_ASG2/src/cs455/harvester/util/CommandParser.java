@@ -1,4 +1,4 @@
-package cs455.util;
+package cs455.harvester.util;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -40,6 +40,8 @@ public class CommandParser extends Thread {
 			crawler.printCompletionReport();
 		else if(message.startsWith("who"))
 			crawler.whoAmI();
+		else if(message.startsWith("build"))
+			crawler.buildDirectory();
 		else
 			System.out.println("Command not recognized");
 	}
