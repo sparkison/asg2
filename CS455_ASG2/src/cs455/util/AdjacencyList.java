@@ -14,6 +14,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,86 +56,161 @@ public class AdjacencyList {
 		if(debug)
 			System.out.println("Creating directory for Crawler: " + ROOT_URL + "...");
 
-		try{
-			String nodePath = FILE.getAbsolutePath();
-			for(String vertex : ADJACENCY.keySet()){
-				if(vertex.contains(ROOT_URL)){
+		String nodePath = FILE.getAbsolutePath();
+		for(String vertex : ADJACENCY.keySet()){
+			if(vertex.contains(ROOT_URL)){
+				try {
+
+					/*
+					 * Build upper level folder for the vertex
+					 */
+					String nodeFolder = getDirectoryName(vertex);
+					if(nodeFolder.equals(""))
+						nodeFolder = ROOT_URL.replaceAll("[^a-zA-Z0-9._-]", "-");
+					else if(nodeFolder.charAt(0) == '-')
+						nodeFolder = nodeFolder.substring(1);
+
+					File file = new File(nodePath + "/" + nodeFolder);
+					if (!file.exists()) {
+						file.mkdirs();
+					}
+
+					/*
+					 * Build the out file
+					 */
+					File outFile = new File(file.getAbsolutePath() + "/out");
+					List<String> out = outEdges(vertex);
 					try {
-
-						/*
-						 * Build upper level folder for the vertex
-						 */
-						String nodeFolder = getDirectoryName(vertex);
-						if(nodeFolder.equals(""))
-							nodeFolder = ROOT_URL.replaceAll("[^a-zA-Z0-9._-]", "-");
-						else if(nodeFolder.charAt(0) == '-')
-							nodeFolder = nodeFolder.substring(1);
-
-						File file = new File(nodePath + "/" + nodeFolder);
-						if (!file.exists()) {
-							file.mkdirs();
+						PrintWriter outWriter = new PrintWriter(outFile);
+						for(String edge : out){
+							outWriter.println(edge);
 						}
-
-						/*
-						 * Build the out file
-						 */
-						File outFile = new File(file.getAbsolutePath() + "/out");
-						List<String> out = outEdges(vertex);
-						try {
-							PrintWriter outWriter = new PrintWriter(outFile);
-							for(String edge : out){
-								outWriter.println(edge);
-							}
-							outWriter.flush();
-							outWriter.close();
-						} catch (FileNotFoundException e) {
-							e.printStackTrace();
-						}
-
-						/*
-						 * Build the in file
-						 */
-						File inFile = new File(file.getAbsolutePath() + "/in");
-						List<String> in = inEdges(vertex);
-						try {
-							PrintWriter inWriter = new PrintWriter(inFile);
-							for(String edge : in){
-								inWriter.println(edge);
-							}
-							inWriter.flush();
-							inWriter.close();
-						} catch (FileNotFoundException e) {
-							e.printStackTrace();
-						}
-
-					} catch (MalformedURLException e) {
+						outWriter.flush();
+						outWriter.close();
+					} catch (FileNotFoundException e) {
 						e.printStackTrace();
 					}
-				}
-				
-				/*
-				 * Write the broken links file
-				 */
-				File brokenLinks = new File(NODE_ROOT + "/broken-links");
-				try {
-					PrintWriter brokenLink = new PrintWriter(brokenLinks);
-					for(String broken : BROKEN_LINKS){
-						brokenLink.println(broken);
+
+					/*
+					 * Build the in file
+					 */
+					File inFile = new File(file.getAbsolutePath() + "/in");
+					List<String> in = inEdges(vertex);
+					try {
+						PrintWriter inWriter = new PrintWriter(inFile);
+						for(String edge : in){
+							inWriter.println(edge);
+						}
+						inWriter.flush();
+						inWriter.close();
+					} catch (FileNotFoundException e) {
+						e.printStackTrace();
 					}
-					brokenLink.flush();
-					brokenLink.close();
-				} catch (FileNotFoundException e) {
+
+				} catch (MalformedURLException e) {
 					e.printStackTrace();
 				}
-				
 			}
-		}finally{
-			
-			if(debug)
-				System.out.println("Finished creating directories.");
 
-			// All done, shut it down...
-			CRAWLER.stop();
+			/*
+			 * Write the broken links file
+			 */
+			File brokenLinks = new File(NODE_ROOT + "/broken-links");
+			try {
+				PrintWriter brokenLink = new PrintWriter(brokenLinks);
+				for(String broken : BROKEN_LINKS){
+					brokenLink.println(broken);
+				}
+				brokenLink.flush();
+				brokenLink.close();
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+
+			/*
+			 * Done with main file creation, now we need to build
+			 * our disjoint graph files
+			 */
+			getConnectedComponents();
+
+		}
+
+		if(debug)
+			System.out.println("Finished creating directories.");
+
+	}
+
+	/**
+	 * Determine the Connected components of the graph, using Dijkstra's BFS
+	 * of the adjacency list
+	 */
+	public void getConnectedComponents(){
+
+		File disjointSubGraphs = new File(NODE_ROOT + "/disjoint-subgraphs");
+		if (!disjointSubGraphs.exists()) {
+			disjointSubGraphs.mkdirs();
+		}
+
+		// Use a map to hold our disjoint graphs
+		Map<Integer, LinkedList<String>> disjointGraphs = new HashMap<Integer, LinkedList<String>>();		
+		// Get the list of vertices
+		LinkedList<String> vertexList = new LinkedList<String>(ADJACENCY.keySet());
+		// Build a working queue
+		LinkedList<String> bfsQueue = new LinkedList<String>();
+		// List to keep track of visited vertices
+		List<String> visited = new ArrayList<String>();
+
+		int index = 0;
+		while(!(vertexList.isEmpty())){
+
+			// Counter to keep track of each disjoint graph
+			index++;
+			disjointGraphs.put(index, new LinkedList<String>());
+			// Add element to list to start
+			bfsQueue.add(vertexList.pop());
+
+			while(!(bfsQueue.isEmpty())){
+
+				String vertex = bfsQueue.pop();
+
+				//TODO fix here, getting null pointer exception...
+				for(String neighbor : ADJACENCY.get(vertex)){
+					if(neighbor != null){
+						// If neighbor not visited...
+						if(!(visited.contains(neighbor))){
+							// Add it to our disjoint graphs container
+							disjointGraphs.get(index).add(neighbor);
+							// Add it to our queue to be visited
+							bfsQueue.add(neighbor);
+							// Remove it from our vertex list (if present)
+							vertexList.remove(neighbor);						
+						}
+					}
+				}
+			}//END while
+
+			/*
+			 * Found first disjoint graph, if vertexList is not empty
+			 * at this point, then still have more disjoint graphs, do it again...
+			 */
+
+		}//END while
+
+		/*
+		 * Loop through our disjoint graph Map container and add graph file, with links, as needed...
+		 */
+		for(Integer disjointCount : disjointGraphs.keySet()){
+			File file = new File(disjointSubGraphs.getAbsolutePath() + "/graph" + disjointCount);
+			try {
+				PrintWriter disjointGraph = new PrintWriter(file);
+				for(String graphEdge : disjointGraphs.get(disjointCount)){
+					disjointGraph.println(graphEdge);
+				}
+				disjointGraph.flush();
+				disjointGraph.close();
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
 		}
 
 	}

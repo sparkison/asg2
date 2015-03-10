@@ -121,6 +121,8 @@ public class CrawlerTask implements Task {
 		con.setInstanceFollowRedirects(false);
 		con.connect();
 		int responseCode = con.getResponseCode();
+		if(responseCode == 403)
+			return true;
 		if(responseCode == 404)
 			return true;
 		if(responseCode == 500)

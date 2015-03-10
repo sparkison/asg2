@@ -223,6 +223,7 @@ public class Crawler implements Node{
 						e.printStackTrace();
 					}
 				}
+				stop();
 			}
 		});  
 		/*
