@@ -173,20 +173,23 @@ public class AdjacencyList {
 
 				String vertex = bfsQueue.pop();
 
-				//TODO fix here, getting null pointer exception...
-				for(String neighbor : ADJACENCY.get(vertex)){
-					if(neighbor != null){
-						// If neighbor not visited...
-						if(!(visited.contains(neighbor))){
-							// Add it to our disjoint graphs container
-							disjointGraphs.get(index).add(neighbor);
-							// Add it to our queue to be visited
-							bfsQueue.add(neighbor);
-							// Remove it from our vertex list (if present)
-							vertexList.remove(neighbor);						
+				ArrayList<String> neighbors = new ArrayList<String>(ADJACENCY.get(vertex));
+				if(neighbors != null){
+					for(String neighbor : neighbors){
+						if(neighbor != null){
+							// If neighbor not visited...
+							if(!(visited.contains(neighbor))){
+								// Add it to our disjoint graphs container
+								disjointGraphs.get(index).add(neighbor);
+								// Add it to our queue to be visited
+								bfsQueue.add(neighbor);
+								// Remove it from our vertex list (if present)
+								vertexList.remove(neighbor);						
+							}
 						}
 					}
 				}
+
 			}//END while
 
 			/*
