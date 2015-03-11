@@ -148,7 +148,7 @@ public class AdjacencyList {
 	 * of the adjacency list
 	 */
 	private void getConnectedComponents(){
-
+		
 		File disjointSubGraphs = new File(NODE_ROOT + "/disjoint-subgraphs");
 		if (!disjointSubGraphs.exists()) {
 			disjointSubGraphs.mkdirs();
@@ -177,40 +177,38 @@ public class AdjacencyList {
 				String vertex = bfsQueue.pop();
 
 				if(!(visited.contains(vertex))){
+										
 					// Mark it as visited
 					visited.add(vertex);
 					// Add it to our disjoint graphs container
 					disjointGraphs.get(index).add(vertex);
-					// Add it to our queue to be visited
-					bfsQueue.add(vertex);
 					// Remove it from our vertex list (if present)
-					vertexList.remove(vertex);						
-				}
-				
-				List<String> neighbors = null;
-				try{
-					neighbors = new ArrayList<String>(ADJACENCY.get(vertex));
-				}catch(NullPointerException e){}
+					vertexList.remove(vertex);	
 
-				// Either the node has neighbors, or it doesn't
-				// Need to handle both cases
-				if(neighbors != null){
-					for(String neighbor : neighbors){
-						if(neighbor != null){
-							// If neighbor not visited...
-							if(!(visited.contains(neighbor))){
-								// Mark it as visited
-								visited.add(neighbor);
-								// Add it to our disjoint graphs container
-								disjointGraphs.get(index).add(neighbor);
-								// Add it to our queue to be visited
-								bfsQueue.add(neighbor);
-								// Remove it from our vertex list (if present)
-								vertexList.remove(neighbor);						
+					List<String> neighbors = null;
+					try{
+						neighbors = new ArrayList<String>(ADJACENCY.get(vertex));
+					}catch(NullPointerException e){}
+
+					// Check vertex neighbors (if any)
+					if(neighbors != null){
+						for(String neighbor : neighbors){
+							if(neighbor != null){
+								// If neighbor not visited...
+								if(!(visited.contains(neighbor))){
+									// Mark it as visited
+									visited.add(neighbor);
+									// Add it to our disjoint graphs container
+									disjointGraphs.get(index).add(neighbor);
+									// Add it to our queue to be visited
+									bfsQueue.add(neighbor);
+									// Remove it from our vertex list (if present)
+									vertexList.remove(neighbor);						
+								}
 							}
 						}
 					}
-				}
+				}// END if visited
 
 			}//END while
 
@@ -220,7 +218,7 @@ public class AdjacencyList {
 			 */
 
 		}//END while
-		
+
 		/*
 		 * Loop through our disjoint graph Map container and add graph file, with links, as needed...
 		 */
@@ -242,7 +240,7 @@ public class AdjacencyList {
 					e.printStackTrace();
 				}
 			}
-			
+
 		}
 
 	}
@@ -314,7 +312,7 @@ public class AdjacencyList {
 	public String getDirectoryName(String directoryUrl) throws MalformedURLException{
 		// URL url = new URL(directoryUrl);
 		// String directoryName = url.getPath();
-		
+
 		String[] temp = directoryUrl.split("/");
 		String directoryName = "";
 
@@ -323,10 +321,10 @@ public class AdjacencyList {
 			if(i != temp.length-1)
 				directoryName += "-";
 		}
-		
+
 		if(!directoryName.equals("") && directoryName.charAt(0) == '-')
 			directoryName = directoryName.substring(1);
-		
+
 		return directoryName.trim();
 	}
 

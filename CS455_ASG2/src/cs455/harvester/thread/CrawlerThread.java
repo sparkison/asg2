@@ -47,8 +47,8 @@ public class CrawlerThread extends Thread{
 					// Notify ThreadPool we've completed our task
 					pool.threadCompletedTask();
 					
-					// "Niceness", sleep for 20 seconds after each task completion
-					Thread.sleep(20000);
+					// "Niceness", sleep for 1 second after each task completion
+					Thread.sleep(1000);
 					
 				} catch (Exception e) {
 					//System.err.println(e.getMessage());

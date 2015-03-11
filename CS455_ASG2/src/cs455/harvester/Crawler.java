@@ -89,7 +89,7 @@ public class Crawler implements Node{
 			// Setup connections to other Crawlers, then start initial task
 			if(!(crawler.setupConnections()))
 				System.out.println("There were some errors setting up connections with other Crawlers. "
-						+ "Will only be able to forward links to Crawlers whos connection was successful.");
+						+ "Will only be able to forward links to Crawlers whose connection was successful.");
 
 		}		
 	}
