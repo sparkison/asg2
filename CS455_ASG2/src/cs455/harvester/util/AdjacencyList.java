@@ -68,7 +68,7 @@ public class AdjacencyList {
 					 * Build upper level folder for the vertex
 					 */
 					String nodeFolder = vertex.replaceAll(PATTERN, "");
-					if(nodeFolder.equals(""))
+					if(nodeFolder.equals("") || nodeFolder.equals("/") || nodeFolder == null)
 						nodeFolder = ROOT_URL.replaceAll("[^a-zA-Z0-9._-]", "-");
 					else
 						nodeFolder = getDirectoryName(nodeFolder);
@@ -181,6 +181,8 @@ public class AdjacencyList {
 					neighbors = new ArrayList<String>(ADJACENCY.get(vertex));
 				}catch(NullPointerException e){}
 
+				// Either the node has neighbors, or it doesn't
+				// Need to handle both cases
 				if(neighbors != null){
 					for(String neighbor : neighbors){
 						if(neighbor != null){
@@ -197,6 +199,17 @@ public class AdjacencyList {
 							}
 						}
 					}
+				} else {
+					if(!(visited.contains(vertex))){
+						// Mark it as visited
+						visited.add(vertex);
+						// Add it to our disjoint graphs container
+						disjointGraphs.get(index).add(vertex);
+						// Add it to our queue to be visited
+						bfsQueue.add(vertex);
+						// Remove it from our vertex list (if present)
+						vertexList.remove(vertex);						
+					}
 				}
 
 			}//END while
@@ -207,12 +220,6 @@ public class AdjacencyList {
 			 */
 
 		}//END while
-
-		//TODO testing, remove below code
-		System.out.println("Neighbors found in DFS:");
-		for(String neighbor : visited){
-			System.out.println(neighbor);
-		}
 		
 		/*
 		 * Loop through our disjoint graph Map container and add graph file, with links, as needed...
@@ -226,7 +233,8 @@ public class AdjacencyList {
 				try {
 					PrintWriter disjointGraph = new PrintWriter(file);
 					for(String graphEdge : disjointGraphs.get(graphIndex)){
-						disjointGraph.println(graphEdge);
+						if(graphEdge.startsWith("http"))
+							disjointGraph.println(graphEdge);
 					}
 					disjointGraph.flush();
 					disjointGraph.close();
