@@ -34,16 +34,22 @@ public class CrawlerThread extends Thread{
 			task = pool.removeFromQueue();
 			if(task != null) {
 				try {
+					// Notify ThreadPool we've started our task
+					pool.threadStartedTask();
+					
 					try {
 						task.start();
 					} finally {
+						// If link sent from other crawler, notify it we've finished
 						if (!(task.getOriginator().equals("internal")))
 							pool.sendComplete(task.getOriginator());
-						// Notify ThreadPool we've completed our task
-						pool.threadCompletedTask();
 					}
-					// "Niceness", sleep for 1 second after each task completion
-					Thread.sleep(1000);
+					// Notify ThreadPool we've completed our task
+					pool.threadCompletedTask();
+					
+					// "Niceness", sleep for 20 seconds after each task completion
+					Thread.sleep(20000);
+					
 				} catch (Exception e) {
 					//System.err.println(e.getMessage());
 				}

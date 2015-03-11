@@ -47,7 +47,7 @@ public class Crawler implements Node{
 	private CrawlerThreadPool myPool;
 	private EventFactory ef = EventFactory.getInstance();
 	// Used for debug print statements
-	private boolean debug = false;
+	private boolean debug = true;
 	// Used to determine program runtime
 	private boolean timer = true;
 
@@ -81,7 +81,7 @@ public class Crawler implements Node{
 			 * Need to pause for 10 seconds before starting tasks
 			 */
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(10000);
 			} catch (InterruptedException e) {
 				System.err.println(e.getMessage());
 			}
@@ -97,7 +97,6 @@ public class Crawler implements Node{
 				crawler.startTask();
 				crawler.heartBeat();
 			}
-			crawler.heartBeat();			
 		}		
 	}
 
@@ -218,7 +217,7 @@ public class Crawler implements Node{
 			public void run() {
 				while(!allCrawlerCompleted()){
 					try {
-						Thread.sleep(5000);
+						Thread.sleep(20000);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
@@ -233,7 +232,7 @@ public class Crawler implements Node{
 		 * need to give it time to queue up some tasks
 		 */
 		try {
-			Thread.sleep(10000);
+			Thread.sleep(20000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}

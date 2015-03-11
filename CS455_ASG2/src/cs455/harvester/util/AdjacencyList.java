@@ -39,7 +39,7 @@ public class AdjacencyList {
 		ROOT_URL = rootUrl;
 		CRAWLER = crawler;
 		NODE_ROOT = DIRECTORY_ROOT + rootUrl.replaceAll("[^a-zA-Z0-9._-]", "-");
-		PATTERN = "(?i).*"+ rootUrl.trim() +".*";
+		PATTERN = "(?i).*"+ rootUrl.trim();
 		FILE = new File(NODE_ROOT + "/nodes");
 	}
 
@@ -61,17 +61,17 @@ public class AdjacencyList {
 
 		String nodePath = FILE.getAbsolutePath();
 		for(String vertex : ADJACENCY.keySet()){
-			if(vertex.matches(PATTERN)){
+			//if(vertex.matches(PATTERN)){
 				try {
 
 					/*
 					 * Build upper level folder for the vertex
 					 */
-					String nodeFolder = getDirectoryName(vertex);
+					String nodeFolder = vertex.replaceAll(PATTERN, "");
 					if(nodeFolder.equals(""))
 						nodeFolder = ROOT_URL.replaceAll("[^a-zA-Z0-9._-]", "-");
-					else if(nodeFolder.charAt(0) == '-')
-						nodeFolder = nodeFolder.substring(1);
+					else
+						nodeFolder = getDirectoryName(nodeFolder);
 
 					File file = new File(nodePath + "/" + nodeFolder);
 					if (!file.exists()) {
@@ -113,7 +113,7 @@ public class AdjacencyList {
 				} catch (MalformedURLException e) {
 					e.printStackTrace();
 				}
-			}
+			//}
 
 			/*
 			 * Write the broken links file
@@ -147,7 +147,7 @@ public class AdjacencyList {
 	 * Determine the Connected components of the graph, using Dijkstra's BFS
 	 * of the adjacency list
 	 */
-	public void getConnectedComponents(){
+	private void getConnectedComponents(){
 
 		File disjointSubGraphs = new File(NODE_ROOT + "/disjoint-subgraphs");
 		if (!disjointSubGraphs.exists()) {
@@ -183,15 +183,7 @@ public class AdjacencyList {
 
 				if(neighbors != null){
 					for(String neighbor : neighbors){
-						if(!(neighbor == null || 
-								neighbor.endsWith(".pdf") || 
-								neighbor.endsWith(".doc") ||
-								neighbor.endsWith(".png") ||
-								neighbor.endsWith(".jpg") ||
-								neighbor.endsWith(".jpeg")||
-								neighbor.endsWith(".tif") ||
-								neighbor.endsWith(".svg") ||
-								!neighbor.startsWith("http"))){
+						if(neighbor != null){
 							// If neighbor not visited...
 							if(!(visited.contains(neighbor))){
 								// Mark it as visited
@@ -219,15 +211,15 @@ public class AdjacencyList {
 		/*
 		 * Loop through our disjoint graph Map container and add graph file, with links, as needed...
 		 */
-		for(Integer disjointCount : disjointGraphs.keySet()){
+		for(Integer graphIndex : disjointGraphs.keySet()){
 
 			int graphFileCount = 1;
-			if(!(disjointGraphs.get(disjointCount).isEmpty())){
+			if(!(disjointGraphs.get(graphIndex).isEmpty())){
 				File file = new File(disjointSubGraphs.getAbsolutePath() + "/graph" + graphFileCount);
 				graphFileCount++;
 				try {
 					PrintWriter disjointGraph = new PrintWriter(file);
-					for(String graphEdge : disjointGraphs.get(disjointCount)){
+					for(String graphEdge : disjointGraphs.get(graphIndex)){
 						disjointGraph.println(graphEdge);
 					}
 					disjointGraph.flush();
@@ -235,7 +227,8 @@ public class AdjacencyList {
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
 				}
-			}			
+			}
+			
 		}
 
 	}
@@ -247,12 +240,14 @@ public class AdjacencyList {
 	 * @param String edge
 	 */
 	public void addEdge(String vertex, String edge){
-		if(!(ADJACENCY.containsKey(vertex))){
-			Set<String> edgeList = new HashSet<String>();
-			edgeList.add(edge);
-			ADJACENCY.put(vertex, edgeList);
-		}else{
-			ADJACENCY.get(vertex).add(edge);
+		synchronized(ADJACENCY){
+			if(!(ADJACENCY.containsKey(vertex))){
+				Set<String> edgeList = new HashSet<String>();
+				edgeList.add(edge);
+				ADJACENCY.put(vertex, edgeList);
+			}else{
+				ADJACENCY.get(vertex).add(edge);
+			}
 		}
 	}
 
@@ -291,7 +286,9 @@ public class AdjacencyList {
 	 * @param url
 	 */
 	public void addBrokenLink(String url){
-		BROKEN_LINKS.add(url);
+		synchronized(BROKEN_LINKS){
+			BROKEN_LINKS.add(url);
+		}
 	}
 
 	/**
@@ -301,16 +298,21 @@ public class AdjacencyList {
 	 * @throws MalformedURLException
 	 */
 	public String getDirectoryName(String directoryUrl) throws MalformedURLException{
-		URL url = new URL(directoryUrl);
-		String directoryName = url.getPath();
-		String[] temp = directoryName.split("/");
-		directoryName = "";
+		// URL url = new URL(directoryUrl);
+		// String directoryName = url.getPath();
+		
+		String[] temp = directoryUrl.split("/");
+		String directoryName = "";
+
 		for(int i = 0; i<temp.length; i++){
 			directoryName += temp[i].replaceAll("[^a-zA-Z0-9._-]", "-");
 			if(i != temp.length-1)
 				directoryName += "-";
 		}
-		System.out.println("Directory name: " + directoryName.trim());
+		
+		if(directoryName.charAt(0) == '-')
+			directoryName = directoryName.substring(1);
+		
 		return directoryName.trim();
 	}
 

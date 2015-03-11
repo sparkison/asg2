@@ -20,8 +20,8 @@ public class CrawlerThreadPool{
 	// Instance variables **************
 	private volatile boolean shutDown;
 	private volatile boolean complete;
-	private volatile int tasksAdded = 0;
-	private volatile int tasksCompleted = 0;
+	private volatile int tasksThreadsStarted = 0;
+	private volatile int tasksThreadsCompleted = 0;
 
 	private final LinkedList<CrawlerThread> THREADS;
 	private final LinkedList<CrawlerTask> TASKS;
@@ -81,14 +81,21 @@ public class CrawlerThreadPool{
 	 * @return
 	 */
 	public boolean isComplete() {
-		return (complete && tasksAdded == tasksCompleted) ? true : false;
+		return complete ? true : false;
 	}
-	
+
+	/**
+	 * Used to increment started task count
+	 */
+	public void threadStartedTask(){
+		tasksThreadsStarted++;
+	}
+
 	/**
 	 * Used to increment completed task count
 	 */
 	public void threadCompletedTask(){
-		tasksCompleted++;
+		tasksThreadsCompleted++;
 	}
 
 	/**
@@ -135,9 +142,7 @@ public class CrawlerThreadPool{
 	 * directory structure associated with this Crawler
 	 */
 	public void createDirectory(){
-		synchronized(TASK_LOCK){
-			ADJACENCY.startDirectoryCreation();
-		}
+		ADJACENCY.startDirectoryCreation();
 	}
 
 	/**
@@ -145,9 +150,7 @@ public class CrawlerThreadPool{
 	 * @param url
 	 */
 	public void reportBrokenLink(String url){
-		synchronized(TASK_LOCK){
-			ADJACENCY.addBrokenLink(url);
-		}
+		ADJACENCY.addBrokenLink(url);
 	}
 
 	/**
@@ -179,37 +182,35 @@ public class CrawlerThreadPool{
 		if(!shutDown) {
 			// Add task to queue, if we haven't already crawled it
 			synchronized(TASK_LOCK){
-				try{
-					if(!(crawled.contains(task.getCrawlUrl()))){
-						// Reset completion status, if previously set to complete
-						resetComplete();
-						// Increment added task count
-						tasksAdded++;
-						// Mark as crawled to prevent duplicate crawling
-						crawled.add(task.getCrawlUrl());
+				if(!(crawled.contains(task.getCrawlUrl()))){
+					// Reset completion status, if previously set to complete
+					resetComplete();
+					// Mark as crawled to prevent duplicate crawling
+					crawled.add(task.getCrawlUrl());
 
-						if(debug)
-							System.out.println("Task added: " + task);
+					if(debug)
+						System.out.println("Task added: " + task);
 
-						// Add the task
-						TASKS.add(task);
-					} else {
-						/*
-						 * Already crawled
-						 * If originated from outside this Crawler, send
-						 * task complete message to originator
-						 */
-						if (!(task.getOriginator().equals("internal"))) {
-							sendComplete(task.getOriginator());
-						}
+					// Add the task
+					TASKS.add(task);
+				} else {
+					/*
+					 * Already crawled
+					 * If originated from outside this Crawler, send
+					 * task complete message to originator
+					 */
+					if (!(task.getOriginator().equals("internal"))) {
+						sendComplete(task.getOriginator());
 					}
-				}finally{
-					if (!(task.getOriginator().equals("internal")))
-						ADJACENCY.addEdge(task.getOriginator(), task.getCrawlUrl());
-					else
-						ADJACENCY.addEdge(task.getParentUrl(), task.getCrawlUrl());
 				}
+
 			}
+
+			if (!(task.getOriginator().equals("internal")))
+				ADJACENCY.addEdge(task.getOriginator(), task.getCrawlUrl());
+			else
+				ADJACENCY.addEdge(task.getParentUrl(), task.getCrawlUrl());
+
 			// If any THREADS waiting, notify task added to queue
 			synchronized(WAIT_LOCK){
 				WAIT_LOCK.notify();

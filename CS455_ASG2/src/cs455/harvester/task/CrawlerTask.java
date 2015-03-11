@@ -7,6 +7,7 @@
 package cs455.harvester.task;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -31,11 +32,9 @@ public class CrawlerTask implements Task {
 	private final CrawlerThreadPool CRAWLER_POOL;
 
 	public CrawlerTask(int recursionDepth, String crawlUrl, String parentUrl, String rootUrl, CrawlerThreadPool crawlerPool, String originator){
-		// Setting recursion depth to negative so we can increment up to 0
-		// to make things more intuitive
 		RECURSION_DEPTH = recursionDepth;
 		CRAWL_URL = relativeToAbs(parentUrl, crawlUrl);
-		PARENT_URL = parentUrl;
+		PARENT_URL = normalize(parentUrl);
 		ROOT_URL = rootUrl;
 		ORIGINATOR = originator;
 		CRAWLER_POOL = crawlerPool;
@@ -55,9 +54,15 @@ public class CrawlerTask implements Task {
 		Config.LoggerProvider = LoggerProvider.DISABLED;
 		try {
 			// Web page that needs to be parsed,
-			// check for redirect before processing
-			final String pageUrl = resolveRedirects(url);
-			Source source = new Source(new URL(pageUrl));
+			final String pageUrl = url;
+			// Check for redirect before processing
+			HttpURLConnection con = (HttpURLConnection)(new URL(pageUrl).openConnection());
+			con.connect();
+			InputStream istream = con.getInputStream();
+			// this is the actual URL, the page is redirected to (if there is a redirect).
+			con.getURL();
+			// instead of passing the URL, pass the input stream.
+			Source source = new Source(istream);
 
 			// Don't parse if document, only if page			
 			if(!(pageUrl.endsWith(".pdf") || pageUrl.endsWith(".doc"))){
@@ -89,24 +94,6 @@ public class CrawlerTask implements Task {
 					CRAWLER_POOL.reportBrokenLink(url);
 				}
 			} catch (IOException e1) {}
-		}
-	}
-
-	/**
-	 * Handle redirects
-	 * @param url
-	 * @return
-	 * @throws IOException
-	 */
-	private String resolveRedirects(String url) throws IOException {
-		HttpURLConnection con = (HttpURLConnection)(new URL(url).openConnection());
-		con.setInstanceFollowRedirects(false);
-		con.connect();
-		int responseCode = con.getResponseCode();
-		if(responseCode == 301){
-			return con.getHeaderField( "Location" );
-		} else {
-			return url;
 		}
 	}
 
@@ -146,7 +133,8 @@ public class CrawlerTask implements Task {
 				absolute = relative;
 			}
 		} catch (URISyntaxException e1) {}
-		return absolute;
+		
+		return normalize(absolute);
 	}
 
 	/**
@@ -177,51 +165,87 @@ public class CrawlerTask implements Task {
 		return new String(ORIGINATOR);
 	}
 
+	/**
+	 * Normalize URL
+	 * Licensed under http://www.apache.org/licenses/LICENSE-2.0
+	 */
+	public static String normalize(String normalized) {
+
+		if (normalized == null) {
+			return null;
+		}
+
+		// If the buffer begins with "./" or "../", the "." or ".." is removed.
+		if (normalized.startsWith("./")) {
+			normalized = normalized.substring(1);
+		} else if (normalized.startsWith("../")) {
+			normalized = normalized.substring(2);
+		} else if (normalized.startsWith("..")) {
+			normalized = normalized.substring(2);
+		}
+
+		// All occurrences of "/./" in the buffer are replaced with "/"
+		int index = -1;
+		while ((index = normalized.indexOf("/./")) != -1) {
+			normalized = normalized.substring(0, index) + normalized.substring(index + 2);
+		}
+
+		// If the buffer ends with "/.", the "." is removed.
+		if (normalized.endsWith("/.")) {
+			normalized = normalized.substring(0, normalized.length() - 1);
+		}
+
+		int startIndex = 0;
+
+		// All occurrences of "/<segment>/../" in the buffer, where ".."
+		// and <segment> are complete path segments, are iteratively replaced
+		// with "/" in order from left to right until no matching pattern remains.
+		// If the buffer ends with "/<segment>/..", that is also replaced
+		// with "/".  Note that <segment> may be empty.
+		while ((index = normalized.indexOf("/../", startIndex)) != -1) {
+			int slashIndex = normalized.lastIndexOf('/', index - 1);
+			if (slashIndex >= 0) {
+				normalized = normalized.substring(0, slashIndex) + normalized.substring(index + 3);
+			} else {
+				startIndex = index + 3;
+			}
+		}
+		if (normalized.endsWith("/..")) {
+			int slashIndex = normalized.lastIndexOf('/', normalized.length() - 4);
+			if (slashIndex >= 0) {
+				normalized = normalized.substring(0, slashIndex + 1);
+			}
+		}
+
+		// All prefixes of "<segment>/../" in the buffer, where ".."
+		// and <segment> are complete path segments, are iteratively replaced
+		// with "/" in order from left to right until no matching pattern remains.
+		// If the buffer ends with "<segment>/..", that is also replaced
+		// with "/".  Note that <segment> may be empty.
+		while ((index = normalized.indexOf("/../")) != -1) {
+			int slashIndex = normalized.lastIndexOf('/', index - 1);
+			if (slashIndex >= 0) {
+				break;
+			} else {
+				normalized = normalized.substring(index + 3);
+			}
+		}
+		if (normalized.endsWith("/..")) {
+			int slashIndex = normalized.lastIndexOf('/', normalized.length() - 4);
+			if (slashIndex < 0) {
+				normalized = "/";
+			}
+		}
+
+		return normalized;
+	}
+
 	@Override
 	public String toString() {
 		return "CrawlerTask [RECURSION_DEPTH=" + RECURSION_DEPTH + ", "
 				+ (CRAWL_URL != null ? "CRAWL_URL=" + CRAWL_URL + ", " : "")
 				+ (PARENT_URL != null ? "PARENT_URL=" + PARENT_URL + ", " : "")
 				+ (ROOT_URL != null ? "ROOT_URL=" + ROOT_URL : "") + "]";
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result
-				+ ((CRAWL_URL == null) ? 0 : CRAWL_URL.hashCode());
-		result = prime * result + ((ROOT_URL == null) ? 0 : ROOT_URL.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (!(obj instanceof CrawlerTask)) {
-			return false;
-		}
-		CrawlerTask other = (CrawlerTask) obj;
-		if (CRAWL_URL == null) {
-			if (other.CRAWL_URL != null) {
-				return false;
-			}
-		} else if (!CRAWL_URL.equals(other.CRAWL_URL)) {
-			return false;
-		}
-		if (ROOT_URL == null) {
-			if (other.ROOT_URL != null) {
-				return false;
-			}
-		} else if (!ROOT_URL.equals(other.ROOT_URL)) {
-			return false;
-		}
-		return true;
 	}
 
 }//************** END CrawlTask **************
