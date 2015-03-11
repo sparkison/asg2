@@ -176,6 +176,17 @@ public class AdjacencyList {
 
 				String vertex = bfsQueue.pop();
 
+				if(!(visited.contains(vertex))){
+					// Mark it as visited
+					visited.add(vertex);
+					// Add it to our disjoint graphs container
+					disjointGraphs.get(index).add(vertex);
+					// Add it to our queue to be visited
+					bfsQueue.add(vertex);
+					// Remove it from our vertex list (if present)
+					vertexList.remove(vertex);						
+				}
+				
 				List<String> neighbors = null;
 				try{
 					neighbors = new ArrayList<String>(ADJACENCY.get(vertex));
@@ -198,17 +209,6 @@ public class AdjacencyList {
 								vertexList.remove(neighbor);						
 							}
 						}
-					}
-				} else {
-					if(!(visited.contains(vertex))){
-						// Mark it as visited
-						visited.add(vertex);
-						// Add it to our disjoint graphs container
-						disjointGraphs.get(index).add(vertex);
-						// Add it to our queue to be visited
-						bfsQueue.add(vertex);
-						// Remove it from our vertex list (if present)
-						vertexList.remove(vertex);						
 					}
 				}
 

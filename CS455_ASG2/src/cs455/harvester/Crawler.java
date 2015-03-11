@@ -90,12 +90,7 @@ public class Crawler implements Node{
 			if(!(crawler.setupConnections()))
 				System.out.println("There were some errors setting up connections with other Crawlers. "
 						+ "Will only be able to forward links to Crawlers whos connection was successful.");
-			/*
-			 * Start task, and initiate heartbeat
-			 * Heartbeat used to determine if all Crawlers complete or not
-			 */
-			crawler.startTask();
-			crawler.heartBeat();
+
 		}		
 	}
 
@@ -169,6 +164,7 @@ public class Crawler implements Node{
 		 * Crawler task format is: Recursion depth, URL to crawl, parent URL, MyURL, ThreaPool, originator 
 		 * (if not internal, then originator is URL of Crawler that sent the task, otherwise default of "internal")
 		 */
+
 		String originator = "internal";
 		myPool.submit(new CrawlerTask(RECURSION_DEPTH, FULL_URL, FULL_URL, MY_URL, myPool, originator));	
 	}
@@ -216,7 +212,7 @@ public class Crawler implements Node{
 			public void run() {
 				while(!allCrawlerCompleted()){
 					try {
-						Thread.sleep(20000);
+						Thread.sleep(30000);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
@@ -231,11 +227,11 @@ public class Crawler implements Node{
 		 * need to give it time to queue up some tasks
 		 */
 		try {
-			Thread.sleep(20000);
+			Thread.sleep(30000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		// Start listening
+		// Start heartbeat
 		heartBeat.start();
 	}
 
@@ -270,7 +266,16 @@ public class Crawler implements Node{
 					//					System.err.println(e.getMessage());
 				}
 			}
+			
+			/*
+			 * Start task, and initiate heartbeat
+			 * Heartbeat used to determine if all Crawlers complete or not
+			 */
+			startTask();
+			heartBeat();
+			
 		}
+
 		return success;
 	}
 
@@ -455,7 +460,6 @@ public class Crawler implements Node{
 				}
 			} catch (IOException e) {
 				// e.printStackTrace();
-				System.out.println("Connection to Crawler lost, unable to send task to Crawler.");
 			}
 		}
 	}
