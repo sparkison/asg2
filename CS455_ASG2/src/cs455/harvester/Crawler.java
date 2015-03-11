@@ -47,14 +47,14 @@ public class Crawler implements Node{
 	private CrawlerThreadPool myPool;
 	private EventFactory ef = EventFactory.getInstance();
 	// Used for debug print statements
-	private boolean debug = true;
+	private boolean debug = false;
 	// Used to determine program runtime
 	private boolean timer = true;
 
 	public static void main(String[] args) throws InterruptedException {
-		
+
 		Crawler crawler = null;
-		
+
 		if(args.length < 3){
 			System.out.println("Incorrect format used to initate Crawler\nPlease use: cs455.harvester.Crawler [portNum] [poolSize] [rootUrl] [configPath]");
 		}else{
@@ -69,7 +69,7 @@ public class Crawler implements Node{
 				System.err.println(e.getMessage());
 				System.exit(-1);
 			}
-			
+
 			// Start listening for connections
 			crawler.listen();		
 
@@ -88,15 +88,14 @@ public class Crawler implements Node{
 
 			// Setup connections to other Crawlers, then start initial task
 			if(!(crawler.setupConnections()))
-				System.out.println("There were some errors setting up connections with other Crawlers");
-			else{
-				/*
-				 * Start task, and initiate heartbeat
-				 * Heartbeat used to determine if all Crawlers complete or not
-				 */
-				crawler.startTask();
-				crawler.heartBeat();
-			}
+				System.out.println("There were some errors setting up connections with other Crawlers. "
+						+ "Will only be able to forward links to Crawlers whos connection was successful.");
+			/*
+			 * Start task, and initiate heartbeat
+			 * Heartbeat used to determine if all Crawlers complete or not
+			 */
+			crawler.startTask();
+			crawler.heartBeat();
 		}		
 	}
 
@@ -154,14 +153,14 @@ public class Crawler implements Node{
 
 		}
 		scanner.close();
-		
+
 		// Instantiate the ThreadPool
 		myPool = new CrawlerThreadPool(poolSize, this);
 
 		// Open ServerSocket to accept data from other Messaging Nodes
 		SERVER_SOCKET = new ServerSocket(port);
 	}
-	
+
 	/**
 	 * Start initial crawl task
 	 */
@@ -263,12 +262,12 @@ public class Crawler implements Node{
 					crawlersComplete.put(rootUrl, false);
 				} catch (UnknownHostException e) {
 					success = false;
-					System.out.println("Error connecting to crawler "+ connection[0] +", unknown host error occurred: ");
-					System.err.println(e.getMessage());
+					//					System.out.println("Error connecting to crawler "+ connection[0] +", unknown host error occurred: ");
+					//					System.err.println(e.getMessage());
 				} catch (IOException e) {
 					success = false;
-					System.out.println("Error connecting to crawler " + connection[0] +": ");
-					System.err.println(e.getMessage());
+					//					System.out.println("Error connecting to crawler " + connection[0] +": ");
+					//					System.err.println(e.getMessage());
 				}
 			}
 		}
@@ -529,15 +528,15 @@ public class Crawler implements Node{
 			 * 
 			 * create the directory structure for this Crawler
 			 */
-			
+
 			if(timer){
 				long endTime = System.nanoTime();
 				long duration = (endTime - startTime)/1000000000; // duration in seconds
 				System.out.println("\n\n*******************************************\n CRAWLER COMPLETED IN "+duration/60+"mins / "+duration%60+"secs \n*******************************************\n\n");
 			}
-			
+
 			myPool.createDirectory();
-			
+
 			return true;
 		}
 	}
@@ -574,7 +573,7 @@ public class Crawler implements Node{
 		System.out.println(" I am Crawler: " + MY_URL);
 		System.out.println("\n******************************\n\n");
 	}
-	
+
 	/**
 	 * Helper method to manually build out directory
 	 */

@@ -61,7 +61,7 @@ public class AdjacencyList {
 
 		String nodePath = FILE.getAbsolutePath();
 		for(String vertex : ADJACENCY.keySet()){
-			//if(vertex.matches(PATTERN)){
+			if(vertex.contains(ROOT_URL)){
 				try {
 
 					/*
@@ -113,7 +113,7 @@ public class AdjacencyList {
 				} catch (MalformedURLException e) {
 					e.printStackTrace();
 				}
-			//}
+			}
 
 			/*
 			 * Write the broken links file
@@ -208,6 +208,12 @@ public class AdjacencyList {
 
 		}//END while
 
+		//TODO testing, remove below code
+		System.out.println("Neighbors found in DFS:");
+		for(String neighbor : visited){
+			System.out.println(neighbor);
+		}
+		
 		/*
 		 * Loop through our disjoint graph Map container and add graph file, with links, as needed...
 		 */
@@ -310,7 +316,7 @@ public class AdjacencyList {
 				directoryName += "-";
 		}
 		
-		if(directoryName.charAt(0) == '-')
+		if(!directoryName.equals("") && directoryName.charAt(0) == '-')
 			directoryName = directoryName.substring(1);
 		
 		return directoryName.trim();
